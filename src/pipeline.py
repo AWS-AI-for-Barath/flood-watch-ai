@@ -3,6 +3,8 @@ pipeline.py — Fusion pipeline for FloodWatch AI.
 
 Orchestrates frame extraction, Nova semantic analysis, and YOLO depth
 estimation, then fuses results into a unified JSON output.
+
+Schema is enforced on every output via enforce_schema().
 """
 
 import json
@@ -15,6 +17,76 @@ from src.yolo_detector import estimate_depth
 
 logger = logging.getLogger(__name__)
 
+# ---------- Schema definition ----------
+
+REQUIRED_KEYS = {
+    "input_file": str,
+    "water_depth_cm": (float, int, type(None)),
+    "severity": str,
+    "people_trapped": bool,
+    "vehicles_submerged": bool,
+    "infrastructure_damage": bool,
+    "reference_object": (str, type(None)),
+    "confidence": (float, int, type(None)),
+    "description": str,
+}
+
+VALID_SEVERITIES = {"low", "medium", "high", "unknown"}
+
+
+def enforce_schema(result: dict) -> dict:
+    """
+    Validate and normalise pipeline output to match the frozen schema.
+
+    - Ensures all required keys are present (fills missing with None/defaults).
+    - Enforces severity enum.
+    - Guarantees no extra keys leak through.
+
+    Args:
+        result: Raw fused pipeline dict.
+
+    Returns:
+        Schema-compliant dict with all keys present.
+    """
+    defaults = {
+        "input_file": "",
+        "water_depth_cm": None,
+        "severity": "unknown",
+        "people_trapped": False,
+        "vehicles_submerged": False,
+        "infrastructure_damage": False,
+        "reference_object": None,
+        "confidence": None,
+        "description": "",
+    }
+
+    validated = {}
+    for key, expected_type in REQUIRED_KEYS.items():
+        value = result.get(key, defaults[key])
+        # Fill None for missing optional fields
+        if value is None:
+            validated[key] = None
+        elif not isinstance(value, expected_type):
+            logger.warning(
+                f"Schema: key '{key}' has type {type(value).__name__}, "
+                f"expected {expected_type} — using default"
+            )
+            validated[key] = defaults[key]
+        else:
+            validated[key] = value
+
+    # Enforce severity enum
+    if validated["severity"] not in VALID_SEVERITIES:
+        logger.warning(
+            f"Schema: severity '{validated['severity']}' not in "
+            f"{VALID_SEVERITIES} — defaulting to 'unknown'"
+        )
+        validated["severity"] = "unknown"
+
+    return validated
+
+
+# ---------- Pipeline ----------
 
 def run_pipeline(
     input_path: str,
@@ -30,7 +102,7 @@ def run_pipeline(
         strategy: Frame extraction strategy for videos (first/middle/last).
 
     Returns:
-        Unified result dict combining Nova and YOLO outputs.
+        Schema-validated result dict combining Nova and YOLO outputs.
     """
     logger.info(f"Starting pipeline for: {input_path}")
 
@@ -74,7 +146,7 @@ def run_pipeline(
         f"({yolo_result.get('reference_object')})"
     )
 
-    # Step 4: Fuse results
+    # Step 4: Fuse and enforce schema
     result = {
         "input_file": os.path.basename(input_path),
         "water_depth_cm": yolo_result["water_depth_cm"],
@@ -86,6 +158,8 @@ def run_pipeline(
         "confidence": yolo_result["confidence"],
         "description": nova_result["description"],
     }
+
+    result = enforce_schema(result)
 
     # Write to file if output path specified
     if output_path:

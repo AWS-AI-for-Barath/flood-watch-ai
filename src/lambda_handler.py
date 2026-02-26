@@ -10,7 +10,7 @@ AWS Lambda handler entry point when deployed.
 
 import logging
 
-from src.pipeline import run_pipeline
+from src.pipeline import enforce_schema, run_pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -31,21 +31,29 @@ def handle_media_input(
     Returns:
         {
             "status": "success" | "error",
-            "data": {pipeline_output} on success,
-            "message": "error description" on failure
+            "data": {schema-validated pipeline output} | None,
+            "message": str | None
         }
+
+    Never raises exceptions.
     """
     try:
         logger.info(f"Lambda handler invoked for: {input_path}")
         result = run_pipeline(input_path, output_path=output_path, strategy=strategy)
+
+        # Double-check schema on the way out
+        validated = enforce_schema(result)
+
         logger.info("Pipeline completed successfully.")
         return {
             "status": "success",
-            "data": result,
+            "data": validated,
+            "message": None,
         }
     except Exception as e:
         logger.error(f"Pipeline failed: {type(e).__name__}: {e}")
         return {
             "status": "error",
+            "data": None,
             "message": f"{type(e).__name__}: {e}",
         }

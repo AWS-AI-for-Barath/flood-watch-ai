@@ -5,6 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from src.lambda_handler import handle_media_input
+from src.pipeline import REQUIRED_KEYS
 
 
 MOCK_PIPELINE_OUTPUT = {
@@ -29,15 +30,15 @@ class TestHandleMediaInputSuccess:
         result = handle_media_input("flood.jpg")
 
         assert result["status"] == "success"
-        assert "data" in result
-        assert "message" not in result
+        assert isinstance(result["data"], dict)
+        assert result["message"] is None
 
     @patch("src.lambda_handler.run_pipeline", return_value=MOCK_PIPELINE_OUTPUT)
-    def test_data_matches_pipeline_output(self, mock_pipeline):
-        """Should pass through the exact pipeline output in data field."""
+    def test_data_is_schema_validated(self, mock_pipeline):
+        """Data should be schema-validated with all required keys."""
         result = handle_media_input("flood.jpg")
 
-        assert result["data"] == MOCK_PIPELINE_OUTPUT
+        assert set(result["data"].keys()) == set(REQUIRED_KEYS.keys())
         assert result["data"]["severity"] == "high"
         assert result["data"]["water_depth_cm"] == 37.5
 
@@ -69,9 +70,8 @@ class TestHandleMediaInputError:
         result = handle_media_input("missing.jpg")
 
         assert result["status"] == "error"
-        assert "message" in result
         assert "not found" in result["message"]
-        assert "data" not in result
+        assert result["data"] is None
 
     @patch("src.lambda_handler.run_pipeline", side_effect=ValueError("bad format"))
     def test_value_error(self, mock_pipeline):
@@ -99,16 +99,16 @@ class TestHandleMediaInputError:
 
 
 class TestResponseSchema:
-    """Verify the envelope structure."""
+    """Verify the envelope structure — always 3 keys."""
 
     @patch("src.lambda_handler.run_pipeline", return_value=MOCK_PIPELINE_OUTPUT)
     def test_success_keys(self, mock_pipeline):
-        """Success response should have exactly status and data."""
+        """Success response should have status, data, and message."""
         result = handle_media_input("flood.jpg")
-        assert set(result.keys()) == {"status", "data"}
+        assert set(result.keys()) == {"status", "data", "message"}
 
     @patch("src.lambda_handler.run_pipeline", side_effect=Exception("fail"))
     def test_error_keys(self, mock_pipeline):
-        """Error response should have exactly status and message."""
+        """Error response should have status, data, and message."""
         result = handle_media_input("flood.jpg")
-        assert set(result.keys()) == {"status", "message"}
+        assert set(result.keys()) == {"status", "data", "message"}
