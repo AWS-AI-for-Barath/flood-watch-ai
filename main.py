@@ -4,14 +4,17 @@ main.py — CLI entry point for FloodWatch AI.
 Usage:
     python main.py input.mp4 --output result.json
     python main.py flood_photo.jpg
+    python main.py flood_clip.mp4 --strategy first --output result.json
 """
 
 import argparse
 import json
 import logging
+import os
 import sys
 
-from src.pipeline import run_pipeline
+from src.lambda_handler import handle_media_input
+from src.video_utils import VIDEO_EXTENSIONS
 
 
 def main():
@@ -30,6 +33,12 @@ def main():
         default=None,
     )
     parser.add_argument(
+        "--strategy", "-s",
+        choices=["first", "middle", "last"],
+        default="middle",
+        help="Frame extraction strategy for video input (default: middle)",
+    )
+    parser.add_argument(
         "--verbose", "-v",
         action="store_true",
         help="Enable verbose logging",
@@ -45,21 +54,25 @@ def main():
         datefmt="%H:%M:%S",
     )
 
-    try:
-        result = run_pipeline(args.input, args.output)
-        print(json.dumps(result, indent=2))
-    except FileNotFoundError as e:
-        print(f"Error: {e}", file=sys.stderr)
+    # Log media type
+    ext = os.path.splitext(args.input)[1].lower()
+    if ext in VIDEO_EXTENSIONS:
+        logging.getLogger(__name__).info(
+            "Processing video input → extracting representative frame"
+        )
+
+    # Use Lambda handler as shared entry point
+    response = handle_media_input(
+        args.input,
+        output_path=args.output,
+        strategy=args.strategy,
+    )
+
+    if response["status"] == "success":
+        print(json.dumps(response["data"], indent=2))
+    else:
+        print(f"Error: {response['message']}", file=sys.stderr)
         sys.exit(1)
-    except ValueError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
-    except RuntimeError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(2)
-    except KeyboardInterrupt:
-        print("\nAborted.", file=sys.stderr)
-        sys.exit(130)
 
 
 if __name__ == "__main__":

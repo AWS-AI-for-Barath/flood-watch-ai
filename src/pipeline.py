@@ -10,7 +10,7 @@ import logging
 import os
 
 from src.nova_client import analyze_flood_scene
-from src.video_utils import extract_frame
+from src.video_utils import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, extract_frame
 from src.yolo_detector import estimate_depth
 
 logger = logging.getLogger(__name__)
@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 def run_pipeline(
     input_path: str,
     output_path: str | None = None,
+    strategy: str = "middle",
 ) -> dict:
     """
     Run the full FloodWatch analysis pipeline.
@@ -26,15 +27,28 @@ def run_pipeline(
     Args:
         input_path: Path to a local video or image file.
         output_path: Optional path to write the JSON result.
+        strategy: Frame extraction strategy for videos (first/middle/last).
 
     Returns:
         Unified result dict combining Nova and YOLO outputs.
     """
     logger.info(f"Starting pipeline for: {input_path}")
 
+    # Detect and log media type
+    ext = os.path.splitext(input_path)[1].lower()
+    if ext in VIDEO_EXTENSIONS:
+        media_type = "video"
+        logger.info(f"Media type: video ({ext}) — frame strategy: {strategy}")
+    elif ext in IMAGE_EXTENSIONS:
+        media_type = "image"
+        logger.info(f"Media type: image ({ext})")
+    else:
+        media_type = "unknown"
+        logger.info(f"Media type: unknown ({ext})")
+
     # Step 1: Extract frame
-    logger.info("Extracting frame...")
-    frame = extract_frame(input_path)
+    logger.info("Extracting representative frame...")
+    frame = extract_frame(input_path, strategy=strategy)
     logger.info(f"Frame extracted: {frame.shape[1]}x{frame.shape[0]} px")
 
     # Step 2: Nova semantic analysis
