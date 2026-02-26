@@ -13,6 +13,9 @@ import boto3
 import cv2
 import numpy as np
 from botocore.exceptions import ClientError
+import os
+
+USE_BEDROCK = os.getenv("FLOODWATCH_USE_BEDROCK", "false").lower() == "true"
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +35,7 @@ Return ONLY the JSON object. No markdown, no explanation, no extra text."""
 DEFAULT_MODEL_ID = "amazon.nova-lite-v1:0"
 
 
-def analyze_flood_scene(
+'''def analyze_flood_scene(
     frame: np.ndarray,
     model_id: str = DEFAULT_MODEL_ID,
     region_name: str = "us-east-1",
@@ -52,13 +55,31 @@ def analyze_flood_scene(
     Raises:
         RuntimeError: If the Bedrock call fails or returns unparseable output.
     """
+'''
+
+def analyze_flood_scene(
+    frame: np.ndarray,
+    model_id: str = DEFAULT_MODEL_ID,
+    region_name: str = "us-east-1",
+) -> dict:
+
+    # ---- DEV MODE (no Bedrock call) ----
+    if not USE_BEDROCK:
+        logger.info("FLOODWATCH_USE_BEDROCK=false → returning mock Nova output")
+        return {
+            "people_trapped": False,
+            "vehicles_submerged": True,
+            "infrastructure_damage": False,
+            "severity": "medium",
+            "description": "Mock flood scene with partially submerged vehicles."
+        }
+
     # Encode frame to JPEG bytes
     success, buffer = cv2.imencode(".jpg", frame)
     if not success:
         raise RuntimeError("Failed to encode frame to JPEG for Bedrock.")
 
     image_bytes = buffer.tobytes()
-    image_b64 = base64.b64encode(image_bytes).decode("utf-8")
 
     # Build the Bedrock converse request
     client = boto3.client("bedrock-runtime", region_name=region_name)
