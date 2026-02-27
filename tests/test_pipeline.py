@@ -18,7 +18,7 @@ MOCK_NOVA_RESULT = {
 }
 
 MOCK_YOLO_RESULT = {
-    "water_depth_cm": 37.5,
+    "submergence_ratio": 0.5,
     "reference_object": "car",
     "confidence": 0.91,
 }
@@ -43,7 +43,7 @@ class TestRunPipeline:
 
         # Check all required keys exist
         required_keys = {
-            "input_file", "water_depth_cm", "severity",
+            "input_file", "submergence_ratio", "severity",
             "people_trapped", "vehicles_submerged", "infrastructure_damage",
             "reference_object", "confidence", "description",
         }
@@ -51,7 +51,7 @@ class TestRunPipeline:
 
         # Check values from mocks
         assert result["severity"] == "high"
-        assert result["water_depth_cm"] == 37.5
+        assert result["submergence_ratio"] == 0.5
         assert result["vehicles_submerged"] is True
         assert result["reference_object"] == "car"
         assert result["input_file"] == "flood.jpg"
@@ -87,4 +87,4 @@ class TestRunPipeline:
         assert result["severity"] == "unknown"
         assert "unavailable" in result["description"].lower()
         # YOLO results should still be present
-        assert result["water_depth_cm"] == 37.5
+        assert result["submergence_ratio"] == 0.5

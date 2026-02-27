@@ -10,7 +10,7 @@ from src.pipeline import REQUIRED_KEYS
 
 MOCK_PIPELINE_OUTPUT = {
     "input_file": "flood.jpg",
-    "water_depth_cm": 37.5,
+    "submergence_ratio": 0.5,
     "severity": "high",
     "people_trapped": False,
     "vehicles_submerged": True,
@@ -40,7 +40,7 @@ class TestHandleMediaInputSuccess:
 
         assert set(result["data"].keys()) == set(REQUIRED_KEYS.keys())
         assert result["data"]["severity"] == "high"
-        assert result["data"]["water_depth_cm"] == 37.5
+        assert result["data"]["submergence_ratio"] == 0.5
 
     @patch("src.lambda_handler.run_pipeline", return_value=MOCK_PIPELINE_OUTPUT)
     def test_passes_strategy_to_pipeline(self, mock_pipeline):

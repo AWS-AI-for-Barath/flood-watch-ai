@@ -21,13 +21,13 @@ MOCK_NOVA = {
 }
 
 MOCK_YOLO_DEPTH = {
-    "water_depth_cm": 37.5,
+    "submergence_ratio": 0.5,
     "reference_object": "car",
     "confidence": 0.91,
 }
 
 MOCK_YOLO_NULL = {
-    "water_depth_cm": None,
+    "submergence_ratio": None,
     "reference_object": None,
     "confidence": None,
 }
@@ -36,7 +36,7 @@ MOCK_YOLO_NULL = {
 # ---------- Depth detection ----------
 
 class TestDepthDetection:
-    """Validate depth detection returns correct summary."""
+    """Validate submergence detection returns correct summary."""
 
     @patch("src.validation.run_pipeline")
     def test_depth_detected_scene(self, mock_pipeline):
@@ -49,7 +49,7 @@ class TestDepthDetection:
 
         assert result["depth_detected"] is True
         assert result["reference_object"] == "car"
-        assert result["water_depth_cm"] == 37.5
+        assert result["submergence_ratio"] == 0.5
 
     @patch("src.validation.run_pipeline")
     def test_depth_null_scene(self, mock_pipeline):
@@ -62,7 +62,7 @@ class TestDepthDetection:
 
         assert result["depth_detected"] is False
         assert result["reference_object"] is None
-        assert result["water_depth_cm"] is None
+        assert result["submergence_ratio"] is None
 
 
 # ---------- Schema enforcement ----------
@@ -74,7 +74,7 @@ class TestSchemaEnforcement:
         """All required keys must be present in enforced output."""
         raw = {
             "input_file": "test.jpg",
-            "water_depth_cm": 30.0,
+            "submergence_ratio": 0.5,
             "severity": "medium",
             "people_trapped": False,
             "vehicles_submerged": True,
@@ -89,7 +89,7 @@ class TestSchemaEnforcement:
     def test_missing_keys_filled(self):
         """Missing optional fields should be filled with defaults."""
         result = enforce_schema({"input_file": "test.jpg"})
-        assert result["water_depth_cm"] is None
+        assert result["submergence_ratio"] is None
         assert result["reference_object"] is None
         assert result["confidence"] is None
         assert result["severity"] == "unknown"
@@ -127,7 +127,7 @@ class TestLambdaStructure:
         """Success response must have status=success, data dict, message=None."""
         mock_pipeline.return_value = {
             "input_file": "flood.jpg",
-            "water_depth_cm": 37.5,
+            "submergence_ratio": 0.5,
             "severity": "high",
             "people_trapped": False,
             "vehicles_submerged": True,

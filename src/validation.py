@@ -1,7 +1,7 @@
 """
-validation.py — Depth detection validation utility for FloodWatch AI.
+validation.py — Submergence detection validation utility for FloodWatch AI.
 
-Confirms that YOLO depth estimation returns non-null results when
+Confirms that YOLO submergence estimation returns non-null results when
 a detectable reference object is present in the scene.
 """
 
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def validate_depth_detection(input_path: str) -> dict:
     """
-    Run the pipeline and verify whether water depth was estimated
+    Run the pipeline and verify whether submergence was estimated
     from a detected reference object.
 
     Args:
@@ -24,28 +24,28 @@ def validate_depth_detection(input_path: str) -> dict:
         {
             "depth_detected": bool,
             "reference_object": str | None,
-            "water_depth_cm": float | None
+            "submergence_ratio": float | None
         }
     """
-    logger.info(f"Validating depth detection for: {input_path}")
+    logger.info(f"Validating submergence detection for: {input_path}")
 
     result = run_pipeline(input_path)
 
-    depth = result.get("water_depth_cm")
+    ratio = result.get("submergence_ratio")
     ref_obj = result.get("reference_object")
-    detected = depth is not None
+    detected = ratio is not None
 
     summary = {
         "depth_detected": detected,
         "reference_object": ref_obj,
-        "water_depth_cm": depth,
+        "submergence_ratio": ratio,
     }
 
     if detected:
         logger.info(
-            f"Depth detected: {depth} cm via {ref_obj}"
+            f"Submergence detected: {ratio:.0%} via {ref_obj}"
         )
     else:
-        logger.warning("No reference object detected — depth is null.")
+        logger.warning("No reference object detected — submergence is null.")
 
     return summary

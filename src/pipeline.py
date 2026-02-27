@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 REQUIRED_KEYS = {
     "input_file": str,
-    "water_depth_cm": (float, int, type(None)),
+    "submergence_ratio": (float, int, type(None)),
     "severity": str,
     "people_trapped": bool,
     "vehicles_submerged": bool,
@@ -50,7 +50,7 @@ def enforce_schema(result: dict) -> dict:
     """
     defaults = {
         "input_file": "",
-        "water_depth_cm": None,
+        "submergence_ratio": None,
         "severity": "unknown",
         "people_trapped": False,
         "vehicles_submerged": False,
@@ -142,14 +142,14 @@ def run_pipeline(
     logger.info("Running YOLOv8 depth estimation...")
     yolo_result = estimate_depth(frame)
     logger.info(
-        f"YOLO estimate: {yolo_result.get('water_depth_cm')} cm "
+        f"YOLO estimate: {yolo_result.get('submergence_ratio')} submergence "
         f"({yolo_result.get('reference_object')})"
     )
 
     # Step 4: Fuse and enforce schema
     result = {
         "input_file": os.path.basename(input_path),
-        "water_depth_cm": yolo_result["water_depth_cm"],
+        "submergence_ratio": yolo_result["submergence_ratio"],
         "severity": nova_result["severity"],
         "people_trapped": nova_result["people_trapped"],
         "vehicles_submerged": nova_result["vehicles_submerged"],
