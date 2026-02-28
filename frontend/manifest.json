@@ -1,0 +1,22 @@
+{
+    "name": "FloodWatch — Community Flood Reporter",
+    "short_name": "FloodWatch",
+    "description": "Capture and report flood conditions from the field. Offline-first PWA.",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#0a0e1a",
+    "theme_color": "#00d4ff",
+    "categories": [
+        "utilities",
+        "weather"
+    ],
+    "icons": [
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='96' fill='%230a0e1a'/><text x='256' y='340' text-anchor='middle' font-size='280' fill='%2300d4ff'>🌊</text></svg>",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}
