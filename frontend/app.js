@@ -45,15 +45,18 @@ const dom = {
     snapshotCanvas: $('snapshotCanvas'),
     cameraPlaceholder: $('cameraPlaceholder'),
     viewfinder: $('viewfinder'),
+    vfFlash: $('vfFlash'),
     captureSuccess: $('captureSuccess'),
     offlineBanner: $('offlineBanner'),
+    liveIndicator: $('liveIndicator'),
+    statusDot: $('statusDot'),
+    statusText: $('statusText'),
+    shutterRipple: $('shutterRipple'),
     recIndicator: $('recIndicator'),
     recTimer: $('recTimer'),
     btnPhoto: $('btnPhoto'),
     btnVideo: $('btnVideo'),
     btnShutter: $('btnShutter'),
-    statusDot: $('statusDot'),
-    statusText: $('statusText'),
     queueBadge: $('queueBadge'),
     queueCount: $('queueCount'),
     queuePanel: $('queuePanel'),
@@ -61,10 +64,15 @@ const dom = {
     queuePanelBadge: $('queuePanelBadge'),
     queueList: $('queueList'),
     toastContainer: $('toastContainer'),
+    // Telemetry cells
     chipGps: $('chipGps'),
     chipHeading: $('chipHeading'),
     chipPitch: $('chipPitch'),
     chipYaw: $('chipYaw'),
+    gpsValue: $('gpsValue'),
+    hdgValue: $('hdgValue'),
+    pitchValue: $('pitchValue'),
+    yawValue: $('yawValue'),
 };
 
 // ================================================================
@@ -118,8 +126,12 @@ function showToast(message, type = 'info', durationMs = 3500) {
 
 function updateConnectivityUI() {
     const online = navigator.onLine;
-    dom.statusDot.className = `status-dot ${online ? 'status-dot--online' : 'status-dot--offline'}`;
-    dom.statusText.textContent = online ? 'Online' : 'Offline';
+    // LIVE indicator
+    if (dom.liveIndicator) {
+        dom.liveIndicator.classList.toggle('offline', !online);
+    }
+    dom.statusText.textContent = online ? 'LIVE' : 'OFFLINE';
+    // Offline banner
     if (dom.offlineBanner) {
         dom.offlineBanner.classList.toggle('visible', !online);
     }
@@ -199,30 +211,26 @@ function handleOrientation(e) {
 function updateTelemetryUI() {
     // GPS
     if (telemetry.lat !== null && telemetry.lon !== null) {
-        dom.chipGps.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      ${telemetry.lat.toFixed(4)}, ${telemetry.lon.toFixed(4)}`;
-        dom.chipGps.classList.add('telemetry__chip--active');
+        dom.gpsValue.textContent = `${telemetry.lat.toFixed(4)}, ${telemetry.lon.toFixed(4)}`;
+        dom.chipGps.classList.add('active');
     }
 
     // Heading
     if (telemetry.heading !== null) {
-        dom.chipHeading.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
-      ${telemetry.heading}°`;
-        dom.chipHeading.classList.add('telemetry__chip--active');
+        dom.hdgValue.textContent = `${telemetry.heading}°`;
+        dom.chipHeading.classList.add('active');
     }
 
     // Pitch
     if (telemetry.pitch !== null) {
-        dom.chipPitch.textContent = `↕ ${telemetry.pitch}°`;
-        dom.chipPitch.classList.add('telemetry__chip--active');
+        dom.pitchValue.textContent = `${telemetry.pitch}°`;
+        dom.chipPitch.classList.add('active');
     }
 
     // Yaw
     if (telemetry.yaw !== null) {
-        dom.chipYaw.textContent = `↔ ${telemetry.yaw}°`;
-        dom.chipYaw.classList.add('telemetry__chip--active');
+        dom.yawValue.textContent = `${telemetry.yaw}°`;
+        dom.chipYaw.classList.add('active');
     }
 }
 
@@ -362,17 +370,24 @@ function haptic(pattern = [15]) {
 
 /** Show capture flash + success checkmark on viewfinder. */
 function showCaptureConfirmation() {
-    // Flash
-    if (dom.viewfinder) {
+    // Flash layer
+    if (dom.vfFlash) {
         dom.viewfinder.classList.add('flash');
-        setTimeout(() => dom.viewfinder.classList.remove('flash'), 350);
+        setTimeout(() => dom.viewfinder.classList.remove('flash'), 300);
     }
     // Success checkmark
     if (dom.captureSuccess) {
         dom.captureSuccess.classList.remove('show');
-        void dom.captureSuccess.offsetWidth; // force reflow
+        void dom.captureSuccess.offsetWidth;
         dom.captureSuccess.classList.add('show');
-        setTimeout(() => dom.captureSuccess.classList.remove('show'), 900);
+        setTimeout(() => dom.captureSuccess.classList.remove('show'), 800);
+    }
+    // Shutter ripple
+    if (dom.shutterRipple) {
+        dom.shutterRipple.classList.remove('animate');
+        void dom.shutterRipple.offsetWidth;
+        dom.shutterRipple.classList.add('animate');
+        setTimeout(() => dom.shutterRipple.classList.remove('animate'), 600);
     }
     // Haptic
     haptic([12, 50, 12]);
@@ -468,24 +483,23 @@ async function refreshQueueUI() {
     dom.queuePanelBadge.textContent = `${count} pending`;
     dom.queuePanelBadge.dataset.count = count;
 
-    // Render list items (or empty state)
     if (count === 0) {
         dom.queueList.innerHTML = `
-        <div class="queue-panel__empty">
+        <div class="queue-console__empty">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          All reports uploaded
+          ALL REPORTS TRANSMITTED
         </div>`;
     } else {
         dom.queueList.innerHTML = entries.map(entry => {
             const icon = entry.metadata.media_type === 'video' ? '🎬' : '📷';
             const size = formatBytes(entry.mediaBlob?.size || 0);
             return `
-            <div class="queue-item" data-id="${entry.id}" role="listitem">
-              <span class="queue-item__status queue-item__status--pending"></span>
-              <span class="queue-item__icon">${icon}</span>
-              <div class="queue-item__info">
-                <div class="queue-item__name">${entry.metadata.filename}</div>
-                <div class="queue-item__meta">${size} · ${new Date(entry.metadata.timestamp).toLocaleTimeString()}</div>
+            <div class="q-item" data-id="${entry.id}" role="listitem">
+              <span class="q-item__dot q-item__dot--pending"></span>
+              <span class="q-item__icon">${icon}</span>
+              <div class="q-item__info">
+                <div class="q-item__name">${entry.metadata.filename}</div>
+                <div class="q-item__meta">${size} · ${new Date(entry.metadata.timestamp).toLocaleTimeString()}</div>
               </div>
             </div>`;
         }).join('');
@@ -496,10 +510,9 @@ function updateQueueItemStatus(id, status) {
     const item = dom.queueList.querySelector(`[data-id="${id}"]`);
     if (!item) return;
 
-    const dot = item.querySelector('.queue-item__status');
-    dot.className = `queue-item__status queue-item__status--${status}`;
+    const dot = item.querySelector('.q-item__dot');
+    dot.className = `q-item__dot q-item__dot--${status}`;
 
-    // Remove completed items after a beat
     if (status === 'done') {
         setTimeout(() => {
             item.style.opacity = '0';
