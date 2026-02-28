@@ -1,0 +1,5 @@
+[33m1e452de[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m feat: cinematic emergency terminal UI - command header, animated viewfinder, telemetry grid, double-ring shutter, terminal queue
+[33mb669cb3[m refine: production-grade emergency UI - typography, shutter, viewfinder, animations, accessibility
+[33mb522b8f[m feat: add EventBridge rule for S3 media upload events
+[33m715a2d2[m feat: deploy pre-sign Lambda, API Gateway, S3 bucket + update frontend endpoints
+[33m18e46be[m feat: Phase 1 PWA ingestion layer - offline-first flood media capture with S3 upload queue
