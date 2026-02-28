@@ -1,90 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <meta name="theme-color" content="#00d4ff">
+  <meta name="theme-color" content="#060a14">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="description" content="FloodWatch — Capture and report flood conditions offline-first. Community-powered flood intelligence.">
+  <meta name="description"
+    content="FloodWatch — Capture and report flood conditions offline-first. Community-powered flood intelligence.">
+  <meta name="color-scheme" content="dark">
 
   <title>FloodWatch — Flood Reporter</title>
 
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
   <!-- ====== STATUS BAR ====== -->
-  <div class="status-bar" id="statusBar">
+  <header class="status-bar" id="statusBar" role="banner">
     <div class="status-bar__left">
-      <span class="status-dot status-dot--online" id="statusDot"></span>
+      <span class="status-dot status-dot--online" id="statusDot" role="status" aria-label="Connection status"></span>
       <span class="status-text" id="statusText">Online</span>
     </div>
     <div class="status-bar__right">
-      <span class="queue-badge" id="queueBadge" data-count="0">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+      <span class="queue-badge" id="queueBadge" data-count="0" aria-label="Upload queue">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 16 12 12 8 16" />
+          <line x1="12" y1="12" x2="12" y2="21" />
+          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+        </svg>
         <span id="queueCount">0</span>
       </span>
     </div>
-  </div>
+  </header>
 
   <!-- ====== TOAST CONTAINER ====== -->
-  <div class="toast-container" id="toastContainer"></div>
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
   <!-- ====== CAMERA PERMISSION OVERLAY ====== -->
-  <div class="permission-overlay" id="permissionOverlay">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-      <circle cx="12" cy="13" r="4"/>
-    </svg>
-    <h2>Camera Access Required</h2>
-    <p>FloodWatch needs your camera to capture flood conditions. GPS and orientation sensors will also be used if available.</p>
+  <div class="permission-overlay" id="permissionOverlay" role="dialog" aria-modal="true" aria-labelledby="permTitle">
+    <div class="permission-overlay__icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+        <circle cx="12" cy="13" r="4" />
+      </svg>
+    </div>
+    <h2 id="permTitle">Camera Access Required</h2>
+    <p>FloodWatch needs your camera to capture flood conditions. GPS and orientation sensors enhance report accuracy.
+    </p>
     <button class="btn-primary" id="btnGrantPermission">Enable Camera</button>
   </div>
 
   <!-- ====== MAIN APP ====== -->
-  <div class="app" id="app">
+  <main class="app" id="app">
 
     <!-- Header -->
     <header class="header">
-      <h1>🌊 <span>FloodWatch</span></h1>
-      <p>Capture · Report · Protect</p>
+      <h1>
+        <span class="logo-emoji" aria-hidden="true">🌊</span>
+        <span class="logo-text">FloodWatch</span>
+      </h1>
+      <p class="tagline">Capture · Report · Protect</p>
     </header>
 
+    <!-- Offline Banner -->
+    <div class="offline-banner" id="offlineBanner" role="alert">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <line x1="1" y1="1" x2="23" y2="23" />
+        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55" />
+        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39" />
+        <path d="M10.71 5.05A16 16 0 0 1 22.56 9" />
+        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88" />
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+        <line x1="12" y1="20" x2="12.01" y2="20" />
+      </svg>
+      Offline — Reports will upload when reconnected
+    </div>
+
     <!-- Viewfinder -->
-    <section class="viewfinder" id="viewfinder">
+    <section class="viewfinder" id="viewfinder" aria-label="Camera viewfinder">
       <!-- Camera feed -->
       <video id="cameraFeed" autoplay playsinline muted></video>
-      <!-- Snapshot canvas (hidden, used for photo capture) -->
+      <!-- Snapshot canvas (hidden) -->
       <canvas id="snapshotCanvas" class="hidden"></canvas>
-      <!-- Overlay brackets -->
-      <div class="viewfinder__overlay"></div>
+      <!-- 4 corner brackets -->
+      <div class="viewfinder__overlay">
+        <div class="viewfinder__corner viewfinder__corner--tl"></div>
+        <div class="viewfinder__corner viewfinder__corner--tr"></div>
+        <div class="viewfinder__corner viewfinder__corner--bl"></div>
+        <div class="viewfinder__corner viewfinder__corner--br"></div>
+      </div>
       <!-- REC indicator -->
-      <div class="viewfinder__rec" id="recIndicator">REC</div>
+      <div class="viewfinder__rec" id="recIndicator" aria-hidden="true">REC</div>
       <!-- Timer -->
-      <div class="viewfinder__timer" id="recTimer">00:00</div>
-      <!-- Placeholder when camera not active -->
+      <div class="viewfinder__timer" id="recTimer" aria-live="off">00:00</div>
+      <!-- Capture success -->
+      <div class="capture-success" id="captureSuccess">
+        <div class="capture-success__check">
+          <svg viewBox="0 0 24 24">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+      </div>
+      <!-- Placeholder -->
       <div class="viewfinder__placeholder hidden" id="cameraPlaceholder">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-          <circle cx="12" cy="13" r="4"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+          <circle cx="12" cy="13" r="4" />
         </svg>
         <p>Camera unavailable</p>
       </div>
     </section>
 
-    <!-- Telemetry Chips -->
-    <div class="telemetry" id="telemetryStrip">
+    <!-- Telemetry -->
+    <div class="telemetry" id="telemetryStrip" role="status" aria-label="Device sensors">
       <span class="telemetry__chip" id="chipGps">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
         GPS —
       </span>
       <span class="telemetry__chip" id="chipHeading">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+        </svg>
         HDG —
       </span>
       <span class="telemetry__chip" id="chipPitch">↕ Pitch —</span>
@@ -93,30 +146,33 @@
 
     <!-- Controls -->
     <div class="controls">
-      <div class="mode-toggle" id="modeToggle">
-        <button class="mode-toggle__btn active" data-mode="photo" id="btnPhoto">PHOTO</button>
-        <button class="mode-toggle__btn" data-mode="video" id="btnVideo">VIDEO</button>
+      <div class="mode-toggle" id="modeToggle" role="radiogroup" aria-label="Capture mode">
+        <button class="mode-toggle__btn active" data-mode="photo" id="btnPhoto" role="radio"
+          aria-checked="true">Photo</button>
+        <button class="mode-toggle__btn" data-mode="video" id="btnVideo" role="radio"
+          aria-checked="false">Video</button>
       </div>
-      <button class="shutter" id="btnShutter" aria-label="Capture"></button>
+      <button class="shutter" id="btnShutter" aria-label="Capture">
+        <span class="sr-only">Take photo</span>
+      </button>
     </div>
 
-    <!-- Upload Queue Panel -->
-    <section class="queue-panel" id="queuePanel">
-      <div class="queue-panel__header" id="queuePanelHeader">
+    <!-- Upload Queue -->
+    <section class="queue-panel" id="queuePanel" aria-label="Upload queue">
+      <div class="queue-panel__header" id="queuePanelHeader" role="button" aria-expanded="false" tabindex="0">
         <h2>📤 Upload Queue</h2>
         <span class="queue-badge" data-count="0" id="queuePanelBadge">0 pending</span>
       </div>
-      <div class="queue-panel__list" id="queueList">
+      <div class="queue-panel__list" id="queueList" role="list">
         <!-- Dynamically populated -->
       </div>
     </section>
 
-  </div>
+  </main>
 
-  <!-- ====== SCRIPTS (ES Modules) ====== -->
+  <!-- ====== SCRIPTS ====== -->
   <script type="module" src="app.js"></script>
 
-  <!-- ====== SERVICE WORKER REGISTRATION ====== -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -128,4 +184,5 @@
   </script>
 
 </body>
+
 </html>

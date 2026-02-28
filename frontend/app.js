@@ -44,6 +44,9 @@ const dom = {
     cameraFeed: $('cameraFeed'),
     snapshotCanvas: $('snapshotCanvas'),
     cameraPlaceholder: $('cameraPlaceholder'),
+    viewfinder: $('viewfinder'),
+    captureSuccess: $('captureSuccess'),
+    offlineBanner: $('offlineBanner'),
     recIndicator: $('recIndicator'),
     recTimer: $('recTimer'),
     btnPhoto: $('btnPhoto'),
@@ -95,10 +98,12 @@ function formatBytes(bytes) {
 //  TOAST NOTIFICATIONS
 // ================================================================
 
+const TOAST_ICONS = { success: '✓', error: '⚠', info: 'ℹ' };
+
 function showToast(message, type = 'info', durationMs = 3500) {
     const toast = document.createElement('div');
     toast.className = `toast toast--${type}`;
-    toast.textContent = message;
+    toast.innerHTML = `<span class="toast__icon">${TOAST_ICONS[type] || 'ℹ'}</span> ${message}`;
     dom.toastContainer.appendChild(toast);
 
     setTimeout(() => {
@@ -115,6 +120,9 @@ function updateConnectivityUI() {
     const online = navigator.onLine;
     dom.statusDot.className = `status-dot ${online ? 'status-dot--online' : 'status-dot--offline'}`;
     dom.statusText.textContent = online ? 'Online' : 'Offline';
+    if (dom.offlineBanner) {
+        dom.offlineBanner.classList.toggle('visible', !online);
+    }
 }
 
 window.addEventListener('online', () => {
@@ -345,6 +353,31 @@ function stopVideoRecording() {
 //  CAPTURE ORCHESTRATION
 // ================================================================
 
+/** Trigger haptic feedback if available. */
+function haptic(pattern = [15]) {
+    if ('vibrate' in navigator) {
+        try { navigator.vibrate(pattern); } catch (_) { /* silent */ }
+    }
+}
+
+/** Show capture flash + success checkmark on viewfinder. */
+function showCaptureConfirmation() {
+    // Flash
+    if (dom.viewfinder) {
+        dom.viewfinder.classList.add('flash');
+        setTimeout(() => dom.viewfinder.classList.remove('flash'), 350);
+    }
+    // Success checkmark
+    if (dom.captureSuccess) {
+        dom.captureSuccess.classList.remove('show');
+        void dom.captureSuccess.offsetWidth; // force reflow
+        dom.captureSuccess.classList.add('show');
+        setTimeout(() => dom.captureSuccess.classList.remove('show'), 900);
+    }
+    // Haptic
+    haptic([12, 50, 12]);
+}
+
 async function handleCapture(blob, mediaType) {
     const id = generateUUID();
     const ext = mediaType === 'video' ? 'mp4' : 'jpg';
@@ -361,6 +394,9 @@ async function handleCapture(blob, mediaType) {
         filename: `${id}.${ext}`,
         media_type: mediaType === 'video' ? 'video' : 'image'
     };
+
+    // Visual + haptic confirmation
+    showCaptureConfirmation();
 
     // Save to upload manager (IndexedDB + attempt upload)
     await uploadManager.save(id, blob, metadata);
@@ -381,6 +417,7 @@ async function onShutterPress() {
     }
 
     if (captureMode === 'photo') {
+        haptic([10]);
         const blob = await capturePhoto();
         if (blob) await handleCapture(blob, 'image');
     } else {
@@ -429,15 +466,30 @@ async function refreshQueueUI() {
     dom.queueCount.textContent = count;
     dom.queueBadge.dataset.count = count;
     dom.queuePanelBadge.textContent = `${count} pending`;
+    dom.queuePanelBadge.dataset.count = count;
 
-    // Render list items
-    dom.queueList.innerHTML = entries.map(entry => `
-    <div class="queue-item" data-id="${entry.id}">
-      <span class="queue-item__status queue-item__status--pending"></span>
-      <span class="queue-item__name">${entry.metadata.filename}</span>
-      <span class="queue-item__size">${formatBytes(entry.mediaBlob?.size || 0)}</span>
-    </div>
-  `).join('');
+    // Render list items (or empty state)
+    if (count === 0) {
+        dom.queueList.innerHTML = `
+        <div class="queue-panel__empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          All reports uploaded
+        </div>`;
+    } else {
+        dom.queueList.innerHTML = entries.map(entry => {
+            const icon = entry.metadata.media_type === 'video' ? '🎬' : '📷';
+            const size = formatBytes(entry.mediaBlob?.size || 0);
+            return `
+            <div class="queue-item" data-id="${entry.id}" role="listitem">
+              <span class="queue-item__status queue-item__status--pending"></span>
+              <span class="queue-item__icon">${icon}</span>
+              <div class="queue-item__info">
+                <div class="queue-item__name">${entry.metadata.filename}</div>
+                <div class="queue-item__meta">${size} · ${new Date(entry.metadata.timestamp).toLocaleTimeString()}</div>
+              </div>
+            </div>`;
+        }).join('');
+    }
 }
 
 function updateQueueItemStatus(id, status) {
@@ -483,7 +535,16 @@ function init() {
 
     // Queue panel toggle
     dom.queuePanelHeader.addEventListener('click', () => {
-        dom.queuePanel.classList.toggle('open');
+        const isOpen = dom.queuePanel.classList.toggle('open');
+        dom.queuePanelHeader.setAttribute('aria-expanded', isOpen);
+    });
+
+    // Keyboard support for queue panel header
+    dom.queuePanelHeader.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            dom.queuePanelHeader.click();
+        }
     });
 
     // Upload status listener
