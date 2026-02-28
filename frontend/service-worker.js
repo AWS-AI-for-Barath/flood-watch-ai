@@ -103,7 +103,7 @@ async function processUploadQueue() {
     const DB_NAME = 'floodwatch-db';
     const DB_VERSION = 1;
     const STORE_NAME = 'pending-uploads';
-    const API_BASE_URL = '/api';
+    const API_BASE_URL = 'https://481hzpqaq3.execute-api.us-east-1.amazonaws.com';
     const MAX_RETRIES = 5;
 
     function openDB() {

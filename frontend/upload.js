@@ -5,7 +5,7 @@
 
 // ---- Configuration ----
 // Replace with your actual API Gateway / Lambda endpoint that returns pre-signed URLs.
-const API_BASE_URL = '/api';  // placeholder — override at deployment
+const API_BASE_URL = 'https://481hzpqaq3.execute-api.us-east-1.amazonaws.com';  // FloodWatch API Gateway
 
 const MAX_RETRIES = 5;
 const BASE_DELAY_MS = 1000;
