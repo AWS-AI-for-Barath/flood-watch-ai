@@ -4,8 +4,7 @@
    ============================================================ */
 
 // ---- Configuration ----
-// Replace with your actual API Gateway / Lambda endpoint that returns pre-signed URLs.
-const API_BASE_URL = 'https://481hzpqaq3.execute-api.us-east-1.amazonaws.com';  // FloodWatch API Gateway
+const API_BASE_URL = 'https://150zje9iz6.execute-api.us-east-1.amazonaws.com';  // FloodWatch API Gateway
 
 const MAX_RETRIES = 5;
 const BASE_DELAY_MS = 1000;
@@ -73,26 +72,29 @@ async function updateEntry(entry) {
 
 /**
  * Request a pre-signed PUT URL from the backend.
- * Expected response: { "url": "https://s3.../...", "metadataUrl": "https://s3.../..." }
- *
- * In production, replace this with your API Gateway endpoint that invokes
- * a Lambda to generate S3 pre-signed PUT URLs for both media and metadata.
+ * The Lambda expects { filename, contentType } and returns { uploadUrl, key }.
+ * We call it twice: once for the media file, once for the metadata JSON.
  */
-async function getPresignedUrls(filename, metadataFilename) {
-    const resp = await fetch(`${API_BASE_URL}/presign`, {
+async function getPresignedUrls(filename, contentType, metadataFilename) {
+    // 1. Presign for media
+    const mediaResp = await fetch(`${API_BASE_URL}/generate-upload-url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            mediaKey: `media/${filename}`,
-            metadataKey: `metadata/${metadataFilename}`
-        })
+        body: JSON.stringify({ filename, contentType })
     });
+    if (!mediaResp.ok) throw new Error(`Media pre-sign failed: ${mediaResp.status}`);
+    const mediaData = await mediaResp.json();
 
-    if (!resp.ok) {
-        throw new Error(`Pre-sign request failed: ${resp.status}`);
-    }
+    // 2. Presign for metadata JSON
+    const metaResp = await fetch(`${API_BASE_URL}/generate-upload-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: metadataFilename, contentType: 'application/json' })
+    });
+    if (!metaResp.ok) throw new Error(`Metadata pre-sign failed: ${metaResp.status}`);
+    const metaData = await metaResp.json();
 
-    return resp.json();
+    return { mediaUrl: mediaData.uploadUrl, metadataUrl: metaData.uploadUrl };
 }
 
 /**
@@ -149,7 +151,8 @@ async function uploadEntry(entry, onStatusChange) {
             const ext = entry.metadata.media_type === 'video' ? 'mp4' : 'jpg';
             const mediaFilename = `${entry.id}.${ext}`;
             const metadataFilename = `${entry.id}.json`;
-            const { url: mediaUrl, metadataUrl } = await getPresignedUrls(mediaFilename, metadataFilename);
+            const mediaContentTypeForPresign = entry.metadata.media_type === 'video' ? 'video/mp4' : 'image/jpeg';
+            const { mediaUrl, metadataUrl } = await getPresignedUrls(mediaFilename, mediaContentTypeForPresign, metadataFilename);
 
             // 2. Upload media blob
             const mediaContentType = entry.metadata.media_type === 'video' ? 'video/mp4' : 'image/jpeg';
