@@ -1,0 +1,40 @@
+{
+    "Comment": "EventBridge rule to trigger LISFLOOD Processing Job every 15 minutes",
+    "Rule": {
+        "Name": "floodwatch-lisflood-schedule",
+        "Description": "Triggers LISFLOOD hydrodynamic simulation every 15 minutes",
+        "ScheduleExpression": "rate(15 minutes)",
+        "State": "ENABLED",
+        "Tags": [
+            {
+                "Key": "Project",
+                "Value": "FloodWatch"
+            },
+            {
+                "Key": "Phase",
+                "Value": "4"
+            }
+        ]
+    },
+    "Target": {
+        "Id": "lisflood-sagemaker-trigger",
+        "Arn": "arn:aws:lambda:{region}:{account_id}:function:floodwatch-lisflood-trigger",
+        "Input": {
+            "action": "start_processing_job",
+            "config_override": {}
+        }
+    },
+    "LambdaTrigger": {
+        "FunctionName": "floodwatch-lisflood-trigger",
+        "Description": "EventBridge-triggered Lambda that launches SageMaker Processing Job",
+        "Runtime": "python3.12",
+        "Handler": "trigger.handler",
+        "Timeout": 30,
+        "MemorySize": 128,
+        "Environment": {
+            "LISFLOOD_IMAGE_URI": "{account_id}.dkr.ecr.us-east-1.amazonaws.com/floodwatch-lisflood:latest",
+            "SAGEMAKER_ROLE_ARN": "arn:aws:iam::{account_id}:role/floodwatch-sagemaker-role",
+            "FLOODWATCH_S3_BUCKET": "floodwatch-uploads"
+        }
+    }
+}

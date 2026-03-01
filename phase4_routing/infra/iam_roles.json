@@ -1,0 +1,157 @@
+{
+    "Roles": [
+        {
+            "RoleName": "floodwatch-sagemaker-role",
+            "Description": "SageMaker Processing Job execution role for LISFLOOD",
+            "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "sagemaker.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            },
+            "Policies": [
+                {
+                    "PolicyName": "floodwatch-sagemaker-s3",
+                    "PolicyDocument": {
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Action": [
+                                    "s3:GetObject",
+                                    "s3:PutObject",
+                                    "s3:ListBucket"
+                                ],
+                                "Resource": [
+                                    "arn:aws:s3:::floodwatch-uploads",
+                                    "arn:aws:s3:::floodwatch-uploads/lisflood/*"
+                                ]
+                            },
+                            {
+                                "Effect": "Allow",
+                                "Action": [
+                                    "ecr:GetDownloadUrlForLayer",
+                                    "ecr:BatchGetImage",
+                                    "ecr:GetAuthorizationToken"
+                                ],
+                                "Resource": "*"
+                            },
+                            {
+                                "Effect": "Allow",
+                                "Action": [
+                                    "logs:CreateLogGroup",
+                                    "logs:CreateLogStream",
+                                    "logs:PutLogEvents"
+                                ],
+                                "Resource": "arn:aws:logs:*:*:log-group:/aws/sagemaker/*"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "RoleName": "floodwatch-raster-lambda-role",
+            "Description": "Lambda role for raster-to-GeoJSON conversion",
+            "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "lambda.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            },
+            "Policies": [
+                {
+                    "PolicyName": "floodwatch-raster-lambda-policy",
+                    "PolicyDocument": {
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Action": [
+                                    "s3:GetObject"
+                                ],
+                                "Resource": "arn:aws:s3:::floodwatch-uploads/lisflood/output/*"
+                            },
+                            {
+                                "Effect": "Allow",
+                                "Action": [
+                                    "logs:CreateLogGroup",
+                                    "logs:CreateLogStream",
+                                    "logs:PutLogEvents"
+                                ],
+                                "Resource": "arn:aws:logs:*:*:log-group:/aws/lambda/floodwatch-raster-*"
+                            },
+                            {
+                                "Sid": "VPCAccess",
+                                "Effect": "Allow",
+                                "Action": [
+                                    "ec2:CreateNetworkInterface",
+                                    "ec2:DescribeNetworkInterfaces",
+                                    "ec2:DeleteNetworkInterface"
+                                ],
+                                "Resource": "*"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "RoleName": "floodwatch-routing-api-role",
+            "Description": "Lambda role for the routing API endpoint",
+            "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "lambda.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                    }
+                ]
+            },
+            "Policies": [
+                {
+                    "PolicyName": "floodwatch-routing-api-policy",
+                    "PolicyDocument": {
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Action": [
+                                    "logs:CreateLogGroup",
+                                    "logs:CreateLogStream",
+                                    "logs:PutLogEvents"
+                                ],
+                                "Resource": "arn:aws:logs:*:*:log-group:/aws/lambda/floodwatch-routing-*"
+                            },
+                            {
+                                "Sid": "VPCAccess",
+                                "Effect": "Allow",
+                                "Action": [
+                                    "ec2:CreateNetworkInterface",
+                                    "ec2:DescribeNetworkInterfaces",
+                                    "ec2:DeleteNetworkInterface"
+                                ],
+                                "Resource": "*"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

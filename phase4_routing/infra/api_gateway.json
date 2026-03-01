@@ -1,0 +1,52 @@
+{
+    "Comment": "API Gateway HTTP API for Phase 4 routing endpoint",
+    "Api": {
+        "Name": "floodwatch-routing-api",
+        "ProtocolType": "HTTP",
+        "CorsConfiguration": {
+            "AllowOrigins": [
+                "*"
+            ],
+            "AllowMethods": [
+                "GET",
+                "OPTIONS"
+            ],
+            "AllowHeaders": [
+                "Content-Type"
+            ],
+            "MaxAge": 3600
+        }
+    },
+    "Routes": [
+        {
+            "RouteKey": "GET /route",
+            "Target": "floodwatch-routing-handler",
+            "Description": "Flood-aware routing endpoint"
+        }
+    ],
+    "Integration": {
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": "arn:aws:lambda:{region}:{account_id}:function:floodwatch-routing-handler",
+        "PayloadFormatVersion": "2.0"
+    },
+    "Stage": {
+        "StageName": "$default",
+        "AutoDeploy": true
+    },
+    "Lambda": {
+        "FunctionName": "floodwatch-routing-handler",
+        "Runtime": "python3.12",
+        "Handler": "phase4_routing.routing.lambda_handler.handler",
+        "Timeout": 30,
+        "MemorySize": 256,
+        "Environment": {
+            "FLOODWATCH_DB_MODE": "production",
+            "POSTGIS_HOST": "{rds_endpoint}",
+            "POSTGIS_PORT": "5432",
+            "POSTGIS_DB": "floodwatch",
+            "POSTGIS_USER": "floodwatch",
+            "OSRM_ENDPOINT": "http://{osrm_ec2_ip}:5000",
+            "OSRM_MOCK": "0"
+        }
+    }
+}

@@ -1,0 +1,63 @@
+{
+    "ProcessingJobName": "floodwatch-lisflood-{timestamp}",
+    "AppSpecification": {
+        "ImageUri": "{account_id}.dkr.ecr.us-east-1.amazonaws.com/floodwatch-lisflood:latest"
+    },
+    "RoleArn": "arn:aws:iam::{account_id}:role/floodwatch-sagemaker-role",
+    "ProcessingResources": {
+        "ClusterConfig": {
+            "InstanceCount": 1,
+            "InstanceType": "ml.m5.large",
+            "VolumeSizeInGB": 30
+        }
+    },
+    "StoppingCondition": {
+        "MaxRuntimeInSeconds": 900
+    },
+    "ProcessingInputs": [
+        {
+            "InputName": "dem-data",
+            "S3Input": {
+                "S3Uri": "s3://floodwatch-uploads/lisflood/input/dem/",
+                "LocalPath": "/opt/ml/processing/input/dem",
+                "S3DataType": "S3Prefix",
+                "S3InputMode": "File"
+            }
+        },
+        {
+            "InputName": "rainfall-data",
+            "S3Input": {
+                "S3Uri": "s3://floodwatch-uploads/lisflood/input/rainfall/",
+                "LocalPath": "/opt/ml/processing/input/rainfall",
+                "S3DataType": "S3Prefix",
+                "S3InputMode": "File"
+            }
+        }
+    ],
+    "ProcessingOutputConfig": {
+        "Outputs": [
+            {
+                "OutputName": "flood-rasters",
+                "S3Output": {
+                    "S3Uri": "s3://floodwatch-uploads/lisflood/output/",
+                    "LocalPath": "/opt/ml/processing/output",
+                    "S3UploadMode": "EndOfJob"
+                }
+            }
+        ]
+    },
+    "Tags": [
+        {
+            "Key": "Project",
+            "Value": "FloodWatch"
+        },
+        {
+            "Key": "Phase",
+            "Value": "4"
+        },
+        {
+            "Key": "Component",
+            "Value": "LISFLOOD"
+        }
+    ]
+}
