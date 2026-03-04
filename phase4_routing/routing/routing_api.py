@@ -23,10 +23,16 @@ Response schema:
 
 import logging
 import math
+import os
 
 from shapely.geometry import LineString, Point, shape
 
-from phase4_routing.db.flood_store import get_latest_predictions
+from phase4_routing.db.connection import get_connection, get_db_mode
+from phase4_routing.db.flood_store import (
+    fetch_phase3_flood_polygons,
+    get_latest_predictions,
+)
+from phase4_routing.lisflood.flood_propagation import simulate_flood_propagation
 from phase4_routing.osrm.osrm_client import get_osrm_client
 from phase4_routing.routing.risk_levels import get_risk_level
 
@@ -137,10 +143,26 @@ def handle_route_request(
     """
     logger.info("Route request: %s → %s", start, goal)
 
-    # 1. Fetch latest flood predictions
+    # 1. Fetch latest flood data (Phase 3 observed + Phase 4 predicted)
     predictions = get_latest_predictions(minutes=prediction_window_minutes)
     flood_features = predictions.get("features", [])
-    logger.info("Active flood polygons: %d", len(flood_features))
+    logger.info("Existing flood polygons: %d", len(flood_features))
+
+    # 2. Run real flood propagation if in production mode
+    mode = get_db_mode()
+    if mode == "production":
+        try:
+            conn = get_connection()
+            phase3_floods = fetch_phase3_flood_polygons(minutes=prediction_window_minutes)
+            propagated = simulate_flood_propagation(conn, phase3_floods)
+            propagated_features = propagated.get("features", [])
+            flood_features.extend(propagated_features)
+            logger.info("Flood propagation added %d predicted zones (total: %d)",
+                        len(propagated_features), len(flood_features))
+        except Exception as e:
+            logger.error("Flood propagation failed (using existing data): %s", e)
+    else:
+        logger.info("Mock mode: skipping DEM-based flood propagation")
 
     # 2. Query OSRM for route
     osrm = get_osrm_client(mock=use_mock_osrm)
