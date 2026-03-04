@@ -102,23 +102,29 @@ def _get_production_connection():
     """
     Create a psycopg2 connection to a real PostGIS database.
 
-    Reads from env vars:
-        POSTGIS_HOST, POSTGIS_PORT, POSTGIS_DB,
-        POSTGIS_USER, POSTGIS_PASS
+    Reads from env vars (DB_* takes priority, falls back to POSTGIS_*):
+        DB_HOST / POSTGIS_HOST
+        DB_PORT / POSTGIS_PORT
+        DB_NAME / POSTGIS_DB
+        DB_USER / POSTGIS_USER
+        DB_PASS / POSTGIS_PASS
     """
     import psycopg2
 
+    host = os.environ.get("DB_HOST", os.environ.get("POSTGIS_HOST", "localhost"))
+    port = int(os.environ.get("DB_PORT", os.environ.get("POSTGIS_PORT", "5432")))
+    dbname = os.environ.get("DB_NAME", os.environ.get("POSTGIS_DB", "floodwatch"))
+    user = os.environ.get("DB_USER", os.environ.get("POSTGIS_USER", "postgres"))
+    password = os.environ.get("DB_PASS", os.environ.get("POSTGIS_PASS", ""))
+
     conn = psycopg2.connect(
-        host=os.environ.get("POSTGIS_HOST", "localhost"),
-        port=int(os.environ.get("POSTGIS_PORT", "5432")),
-        dbname=os.environ.get("POSTGIS_DB", "floodwatch"),
-        user=os.environ.get("POSTGIS_USER", "floodwatch"),
-        password=os.environ.get("POSTGIS_PASS", ""),
+        host=host,
+        port=port,
+        dbname=dbname,
+        user=user,
+        password=password,
     )
-    logger.info("Connected to PostGIS at %s:%s/%s",
-                os.environ.get("POSTGIS_HOST", "localhost"),
-                os.environ.get("POSTGIS_PORT", "5432"),
-                os.environ.get("POSTGIS_DB", "floodwatch"))
+    logger.info("Connected to PostGIS at %s:%s/%s", host, port, dbname)
     return conn
 
 

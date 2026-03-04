@@ -33,7 +33,7 @@ CREATE INDEX IF NOT EXISTS idx_flood_pred_geom
 -- ────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS road_risk (
     id              SERIAL PRIMARY KEY,
-    road_segment_id VARCHAR(100) NOT NULL,
+    road_segment_id VARCHAR(100) NOT NULL UNIQUE,
     geometry        GEOMETRY(LineString, 4326),
     base_weight     FLOAT NOT NULL DEFAULT 1.0,
     dynamic_weight  FLOAT NOT NULL DEFAULT 1.0,

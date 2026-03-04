@@ -14,6 +14,63 @@ from phase4_routing.db.connection import get_connection, get_db_mode
 logger = logging.getLogger(__name__)
 
 
+# ── Phase 3 Bridge ──────────────────────────────────────────────────
+
+def fetch_phase3_flood_polygons(minutes: int = 60) -> dict:
+    """
+    Read observed flood polygons from Phase 3's ``flood_layer`` table.
+
+    This bridges Phase 3 → Phase 4 by reading real flood data produced
+    by the ``transformFloodPolygon`` Lambda.
+
+    Args:
+        minutes: Time window — polygons newer than this are returned.
+
+    Returns:
+        GeoJSON FeatureCollection with Phase 3 flood polygons.
+    """
+    conn = get_connection()
+    mode = get_db_mode()
+
+    if mode == "mock":
+        logger.info("Mock mode: returning empty Phase 3 flood polygons")
+        return {"type": "FeatureCollection", "features": []}
+
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=minutes)
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT ST_AsGeoJSON(geom)::json,
+               submergence_ratio, severity, timestamp,
+               water_surface_elevation, id::text
+        FROM flood_layer
+        WHERE timestamp >= %s
+        ORDER BY timestamp DESC
+        """,
+        (cutoff,),
+    )
+
+    features = []
+    for row in cursor.fetchall():
+        features.append({
+            "type": "Feature",
+            "geometry": row[0],
+            "properties": {
+                "submergence_ratio": row[1],
+                "severity": row[2],
+                "timestamp": row[3].isoformat() if hasattr(row[3], 'isoformat') else str(row[3]),
+                "water_surface_elevation": row[4],
+                "zone_id": row[5],
+                "source": "phase3_observed",
+            },
+        })
+    cursor.close()
+
+    logger.info("Retrieved %d Phase 3 flood polygons (last %d min)",
+                len(features), minutes)
+    return {"type": "FeatureCollection", "features": features}
+
+
 # ── Flood Predictions ───────────────────────────────────────────────
 
 def store_predictions(geojson: dict) -> int:
@@ -81,12 +138,16 @@ def get_latest_predictions(minutes: int = 30) -> dict:
     """
     Fetch recent flood predictions as a GeoJSON FeatureCollection.
 
+    Merges data from TWO sources:
+      - Phase 3 ``flood_layer`` table (observed, real flood polygons)
+      - Phase 4 ``flood_prediction`` table (LISFLOOD predicted zones)
+
     Args:
         minutes: Time window — predictions newer than this many
                  minutes ago are returned.
 
     Returns:
-        GeoJSON FeatureCollection of active flood polygons.
+        GeoJSON FeatureCollection of all active flood polygons.
     """
     conn = get_connection()
     mode = get_db_mode()
@@ -94,11 +155,15 @@ def get_latest_predictions(minutes: int = 30) -> dict:
 
     features = []
 
+    # ── Source 1: Phase 3 observed flood polygons ──────────────────
+    phase3_data = fetch_phase3_flood_polygons(minutes=minutes)
+    features.extend(phase3_data.get("features", []))
+
+    # ── Source 2: Phase 4 predicted flood polygons ─────────────────
     if mode == "mock":
         for pred in conn.flood_predictions:
             ts = pred["timestamp"]
             if isinstance(ts, str):
-                # Parse ISO timestamp, handle 'Z' suffix
                 ts_clean = ts.replace("Z", "+00:00")
                 try:
                     ts = datetime.fromisoformat(ts_clean)
@@ -113,6 +178,7 @@ def get_latest_predictions(minutes: int = 30) -> dict:
                         "submergence_ratio": pred["submergence_ratio"],
                         "velocity": pred.get("velocity", 0.0),
                         "timestamp": pred["timestamp"],
+                        "source": "phase4_predicted",
                     },
                 })
     else:
@@ -135,11 +201,12 @@ def get_latest_predictions(minutes: int = 30) -> dict:
                     "submergence_ratio": row[1],
                     "velocity": row[2],
                     "timestamp": row[3].isoformat(),
+                    "source": "phase4_predicted",
                 },
             })
         cursor.close()
 
-    logger.info("Retrieved %d active flood predictions (last %d min)",
+    logger.info("Retrieved %d total flood polygons (Phase 3 + Phase 4, last %d min)",
                 len(features), minutes)
 
     return {
