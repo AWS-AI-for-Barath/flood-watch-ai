@@ -1,0 +1,81 @@
+﻿python : Traceback (most recent call last):
+At line:1 char:1
++ python -c "from ultralytics import YOLO; m = 
+YOLO('outputs/best_copy. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Tr 
+   aceback (most recent call last)::String) []  
+  , RemoteException
+    + FullyQualifiedErrorId : NativeCommandErro 
+   r
+ 
+  File "<string>", line 1, in <module>
+  File "C:\Users\naral\AppData\Local\Packages\Py
+thonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0
+\LocalCache\local-packages\Python311\site-packag
+es\ultralytics\models\yolo\model.py", line 76, 
+in __init__
+    super().__init__(model=model, task=task, 
+verbose=verbose)
+  File "C:\Users\naral\AppData\Local\Packages\Py
+thonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0
+\LocalCache\local-packages\Python311\site-packag
+es\ultralytics\engine\model.py", line 144, in 
+__init__
+    self._load(model, task=task)
+  File "C:\Users\naral\AppData\Local\Packages\Py
+thonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0
+\LocalCache\local-packages\Python311\site-packag
+es\ultralytics\engine\model.py", line 283, in 
+_load
+    self.model, self.ckpt = 
+load_checkpoint(weights)
+                            
+^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\naral\AppData\Local\Packages\Py
+thonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0
+\LocalCache\local-packages\Python311\site-packag
+es\ultralytics\nn\tasks.py", line 1515, in 
+load_checkpoint
+    ckpt, weight = torch_safe_load(weight)  # 
+load ckpt
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\naral\AppData\Local\Packages\Py
+thonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0
+\LocalCache\local-packages\Python311\site-packag
+es\ultralytics\nn\tasks.py", line 1463, in 
+torch_safe_load
+    ckpt = torch_load(file, map_location="cpu")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\naral\AppData\Local\Packages\Py
+thonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0
+\LocalCache\local-packages\Python311\site-packag
+es\ultralytics\utils\patches.py", line 178, in 
+torch_load
+    return torch.load(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\naral\AppData\Local\Packages\Py
+thonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0
+\LocalCache\local-packages\Python311\site-packag
+es\torch\serialization.py", line 1500, in load
+    with _open_file_like(f, "rb") as 
+opened_file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\naral\AppData\Local\Packages\Py
+thonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0
+\LocalCache\local-packages\Python311\site-packag
+es\torch\serialization.py", line 768, in 
+_open_file_like
+    return _open_file(name_or_buffer, mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\naral\AppData\Local\Packages\Py
+thonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0
+\LocalCache\local-packages\Python311\site-packag
+es\torch\serialization.py", line 749, in 
+__init__
+    super().__init__(open(name, mode))  # noqa: 
+SIM115
+                     ^^^^^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: 
+'outputs\\best_copy.pt'

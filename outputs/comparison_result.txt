@@ -1,0 +1,61 @@
+﻿============================================================
+  FloodWatch ù Model Comparison
+  Input: weather_houseflood2.jpg
+============================================================
+
+--- Running YOLOv8 (local) ---
+python : 23:05:42 [INFO] compare: [YOLO] 
+Loading image: weather_houseflood2.jpg
+At line:1 char:1
++ python compare_models.py 
+weather_houseflood2.jpg 2>&1 | Out-File -Fil ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~
+    + CategoryInfo          : NotSpecified: (23 
+   :05:42 [INFO]...houseflood2.jpg:String) [],  
+   RemoteException
+    + FullyQualifiedErrorId : NativeCommandErro 
+   r
+ 
+23:05:42 [INFO] compare: [YOLO] Running 
+inference with best.pt...
+23:05:42 [WARNING] src.yolo_detector: No flood 
+model found. Falling back to COCO-pretrained 
+yolov8s.pt
+23:05:43 [INFO] src.yolo_detector: No reference 
+objects detected in frame.
+23:05:43 [INFO] compare: [Nova Lite] Encoding 
+image to base64...
+23:05:43 [INFO] botocore.credentials: Found 
+credentials in shared credentials file: 
+~/.aws/credentials
+23:05:44 [INFO] compare: [Nova Lite] Invoking 
+amazon.nova-lite-v1:0...
+{
+  "model": "YOLOv8 (best.pt \u2014 local)",
+  "submergence_ratio": null,
+  "reference_object": null,
+  "confidence": null
+}
+
+--- Running Nova Lite (Bedrock) ---
+{
+  "people_trapped": false,
+  "infrastructure_damage": true,
+  "severity": "high",
+  "submergence_ratio": 0.8,
+  "model": "Amazon Nova Lite (Bedrock \u2014 cloud)"
+}
+
+============================================================
+  COMPARISON TABLE
+============================================================
+Metric                    YOLO (local)         Nova Lite (cloud)   
+-----------------------------------------------------------------
+submergence_ratio         None                 0.8                 
+people_trapped            N/A                  False               
+infrastructure_damage     N/A                  True                
+severity                  N/A                  high                
+reference_object          None                 N/A                 
+confidence                None                 N/A                 
+============================================================
