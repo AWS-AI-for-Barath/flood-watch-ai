@@ -1,0 +1,53 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "CloudWatchLogs",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": "arn:aws:logs:*:*:*"
+        },
+        {
+            "Sid": "RDSConnectPostGIS",
+            "Effect": "Allow",
+            "Action": [
+                "rds-db:connect"
+            ],
+            "Resource": "arn:aws:rds-db:us-east-1:*:dbuser:*/postgres"
+        },
+        {
+            "Sid": "DynamoDBAlertHistory",
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:Scan",
+                "dynamodb:Query",
+                "dynamodb:GetItem"
+            ],
+            "Resource": "arn:aws:dynamodb:us-east-1:*:table/alert_history*"
+        },
+        {
+            "Sid": "PinpointSMS",
+            "Effect": "Allow",
+            "Action": [
+                "mobiletargeting:SendMessages"
+            ],
+            "Resource": [
+                "arn:aws:mobiletargeting:us-east-1:*:apps/*",
+                "arn:aws:mobiletargeting:us-east-1:*:apps/*/messages"
+            ]
+        },
+        {
+            "Sid": "PollyVoiceGen",
+            "Effect": "Allow",
+            "Action": [
+                "polly:SynthesizeSpeech"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

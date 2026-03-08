@@ -1,0 +1,102 @@
+{
+    "Comment": "CloudWatch logging and monitoring for Phase 4 components",
+    "LogGroups": [
+        {
+            "LogGroupName": "/aws/lambda/floodwatch-raster-to-geojson",
+            "RetentionInDays": 14,
+            "Tags": {
+                "Project": "FloodWatch",
+                "Phase": "4"
+            }
+        },
+        {
+            "LogGroupName": "/aws/lambda/floodwatch-routing-handler",
+            "RetentionInDays": 14,
+            "Tags": {
+                "Project": "FloodWatch",
+                "Phase": "4"
+            }
+        },
+        {
+            "LogGroupName": "/aws/lambda/floodwatch-lisflood-trigger",
+            "RetentionInDays": 14,
+            "Tags": {
+                "Project": "FloodWatch",
+                "Phase": "4"
+            }
+        },
+        {
+            "LogGroupName": "/aws/sagemaker/ProcessingJobs/floodwatch-lisflood",
+            "RetentionInDays": 30,
+            "Tags": {
+                "Project": "FloodWatch",
+                "Phase": "4"
+            }
+        }
+    ],
+    "MetricFilters": [
+        {
+            "LogGroupName": "/aws/lambda/floodwatch-routing-handler",
+            "FilterName": "RoutingErrors",
+            "FilterPattern": "[timestamp, level=ERROR, ...]",
+            "MetricTransformations": [
+                {
+                    "MetricNamespace": "FloodWatch/Phase4",
+                    "MetricName": "RoutingErrors",
+                    "MetricValue": "1",
+                    "DefaultValue": 0
+                }
+            ]
+        },
+        {
+            "LogGroupName": "/aws/lambda/floodwatch-raster-to-geojson",
+            "FilterName": "RasterConversionErrors",
+            "FilterPattern": "[timestamp, level=ERROR, ...]",
+            "MetricTransformations": [
+                {
+                    "MetricNamespace": "FloodWatch/Phase4",
+                    "MetricName": "RasterConversionErrors",
+                    "MetricValue": "1",
+                    "DefaultValue": 0
+                }
+            ]
+        },
+        {
+            "LogGroupName": "/aws/lambda/floodwatch-routing-handler",
+            "FilterName": "BlockedRoutes",
+            "FilterPattern": "{ $.status = \"blocked\" }",
+            "MetricTransformations": [
+                {
+                    "MetricNamespace": "FloodWatch/Phase4",
+                    "MetricName": "BlockedRoutes",
+                    "MetricValue": "1",
+                    "DefaultValue": 0
+                }
+            ]
+        }
+    ],
+    "Alarms": [
+        {
+            "AlarmName": "FloodWatch-RoutingErrors-High",
+            "MetricName": "RoutingErrors",
+            "Namespace": "FloodWatch/Phase4",
+            "Statistic": "Sum",
+            "Period": 300,
+            "EvaluationPeriods": 2,
+            "Threshold": 10,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "AlarmDescription": "More than 10 routing errors in 10 minutes"
+        },
+        {
+            "AlarmName": "FloodWatch-LISFLOODFailure",
+            "MetricName": "RasterConversionErrors",
+            "Namespace": "FloodWatch/Phase4",
+            "Statistic": "Sum",
+            "Period": 900,
+            "EvaluationPeriods": 1,
+            "Threshold": 1,
+            "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+            "AlarmDescription": "LISFLOOD raster conversion failure detected"
+        }
+    ]
+}

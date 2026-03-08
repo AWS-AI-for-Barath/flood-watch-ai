@@ -8,7 +8,7 @@ Used for local testing without calling real AWS services.
 def send_sms_mock(alert: dict) -> None:
     """Simulate sending an SMS via Amazon Pinpoint."""
     print(
-        f"  [SMS → {alert['phone']}]  "
+        f"  [SMS -> {alert.get('phone_number', alert.get('phone'))}]  "
         f"User {alert['user_id']} | "
         f"Severity: {alert['severity'].upper()} | "
         f"Zone: {alert['flood_zone_id']}\n"
@@ -19,7 +19,7 @@ def send_sms_mock(alert: dict) -> None:
 def send_voice_mock(alert: dict) -> None:
     """Simulate a voice call via Amazon Polly."""
     print(
-        f"  [VOICE → {alert['phone']}]  "
+        f"  [VOICE -> {alert.get('phone_number', alert.get('phone'))}]  "
         f"User {alert['user_id']} | "
         f"Severity: {alert['severity'].upper()} | "
         f"Zone: {alert['flood_zone_id']}\n"

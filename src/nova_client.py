@@ -15,7 +15,7 @@ import numpy as np
 from botocore.exceptions import ClientError
 import os
 
-USE_BEDROCK = os.getenv("FLOODWATCH_USE_BEDROCK", "false").lower() == "true"
+USE_BEDROCK = os.getenv("FLOODWATCH_USE_BEDROCK", "true").lower() == "true"
 
 logger = logging.getLogger(__name__)
 
