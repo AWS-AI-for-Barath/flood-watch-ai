@@ -20,83 +20,33 @@ export async function POST(req: Request) {
         console.error("Failed to initialize S3 Client globally:", e);
         return NextResponse.json({ error: "S3 Client failed to initialize on the server: " + e.message }, { status: 500 });
     }
+
     try {
-        let buffer;
-        let fileType = "image/jpeg";
-        let fileName = "upload.jpg";
-        let metadataRaw = "";
+        // Parse the lightweight JSON metadata payload directly to avoid memory/payload limits
+        const body = await req.json();
+        const { mediaKey, metadata } = body;
 
-        try {
-            // In Serverless endpoints, req.formData() crashes if the payload is complex.
-            // Using standard req.arrayBuffer() directly works around the Next.js parser crash.
-            // Since the frontend sends FormData, we have to parse the multipart boundary boundaries manually.
-            const contentType = req.headers.get("content-type") || "";
-            if (!contentType.includes("multipart/form-data")) {
-                return NextResponse.json({ error: "Invalid content type: " + contentType }, { status: 400 });
-            }
-
-            // To avoid complex multipart manual parsing in AWS edge without busboy streaming issues,
-            // we will simply read the raw formData if it's small enough, otherwise we fallback.
-            // Let's try FormData one last time with correct await and catch.
-            const formData = await req.formData();
-
-            const file = formData.get("file") as File;
-            metadataRaw = formData.get("metadata") as string;
-
-            if (!file) {
-                return NextResponse.json({ error: "No file provided" }, { status: 400 });
-            }
-
-            buffer = Buffer.from(await file.arrayBuffer());
-            fileType = file.type;
-            fileName = file.name || "upload.jpg";
-
-        } catch (e: any) {
-            console.error("Payload extraction failed completely:", e);
-            return NextResponse.json({ error: `Payload extraction failed. The file may be too large for Amplify Web Compute limitations: ${e.message}` }, { status: 413 });
+        if (!mediaKey || !metadata) {
+            return NextResponse.json({ error: "Missing mediaKey or metadata in payload" }, { status: 400 });
         }
 
-        const fileExtension = fileName.split('.').pop() || "jpg";
-        const uniqueId = uuidv4().substring(0, 8);
-        const mediaKey = `media/e2e-${uniqueId}.${fileExtension}`;
-        const metaKey = `metadata/e2e-${uniqueId}.json`;
+        // Generate the matching metadata key based on the media key e.g "media/e2e-1234.jpg" -> "e2e-1234.json"
+        const filename = mediaKey.split('/').pop() || "unknown.jpg";
+        const uniqueId = filename.split('.')[0];
+        const metaKey = `metadata/${uniqueId}.json`;
 
-        // 1. Upload the binary media file directly to S3
-        try {
-            await s3Client.send(new PutObjectCommand({
-                Bucket: BUCKET_NAME,
-                Key: mediaKey,
-                Body: buffer,
-                ContentType: fileType,
-            }));
-        } catch (e: any) {
-            console.error("S3 Media Upload Error:", e);
-            return NextResponse.json({ error: `S3 Media PutObject failed: ${e.message}` }, { status: 500 });
-        }
+        metadata.filename = filename;
 
-        // 2. Upload the associated metadata JSON file
-        if (metadataRaw) {
-            try {
-                const metadata = JSON.parse(metadataRaw);
-                // Append the generated filename to metadata as expected by Phase 2
-                metadata.filename = `e2e-${uniqueId}.${fileExtension}`;
-                metadata.media_type = fileType.startsWith("video") ? "video" : "image";
-
-                await s3Client.send(new PutObjectCommand({
-                    Bucket: BUCKET_NAME,
-                    Key: metaKey,
-                    Body: JSON.stringify(metadata),
-                    ContentType: "application/json",
-                }));
-            } catch (e: any) {
-                console.error("S3 Metadata Upload Error:", e);
-                return NextResponse.json({ error: `S3 Metadata PutObject failed: ${e.message}` }, { status: 500 });
-            }
-        }
+        await s3Client.send(new PutObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: metaKey,
+            Body: JSON.stringify(metadata),
+            ContentType: "application/json",
+        }));
 
         return NextResponse.json({
             success: true,
-            message: "Direct S3 Upload Complete",
+            message: "Metadata Saved Successfully",
             mediaKey,
             metaKey
         }, { status: 200 });

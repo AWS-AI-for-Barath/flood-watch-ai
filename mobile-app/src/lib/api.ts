@@ -72,35 +72,58 @@ export async function propagateFlood(lat: number, lon: number, severity: string 
  * Upload file directly to S3 via Next.js Proxy Route
  */
 export async function uploadMedia(file: File, metadata: Record<string, unknown>): Promise<{ mediaKey: string, metaKey: string, uuid: string }> {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("metadata", JSON.stringify(metadata));
+    // Generate unique ID before reaching out to presign API to avoid AWS overwriting the same `upload.jpg`
+    const fileExtension = file.name ? file.name.split('.').pop() : "jpg";
+    const uniqueId = Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+    const generatedFilename = `mobile-${uniqueId}.${fileExtension}`;
 
-    const response = await fetch("/api/upload", {
+    // Step 1: Request a Presigned S3 Upload URL from the API Gateway
+    const presignRes = await fetch(PRESIGN_API_URL, {
         method: "POST",
-        body: formData
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: generatedFilename, contentType: file.type || "image/jpeg" })
     });
 
-    if (!response.ok) {
-        let errStr = "Failed to upload media";
-        const textResponse = await response.text();
+    if (!presignRes.ok) {
+        throw new Error("Failed to secure an AWS S3 upload token. " + await presignRes.text());
+    }
+
+    const { uploadUrl, key } = await presignRes.json();
+    if (!uploadUrl || !key) {
+        throw new Error("AWS did not return a valid presigned upload URL.");
+    }
+
+    // Step 2: Stream the heavy binary file directly from the browser to S3 (Bypassing Next.js Lambdas!)
+    const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type || "image/jpeg" },
+        body: file
+    });
+
+    if (!uploadRes.ok) {
+        throw new Error("Direct S3 transmission failed. Please try again.");
+    }
+
+    // Step 3: Tell Next.js to save the lightweight Metadata JSON
+    const metaRes = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mediaKey: key, metadata })
+    });
+
+    if (!metaRes.ok) {
+        let errStr = "Failed to save media metadata";
+        const textResponse = await metaRes.text();
         try {
             const err = JSON.parse(textResponse);
             errStr = err.error || errStr;
         } catch (e) {
-            // Server returned a raw 500 string instead of JSON
             if (textResponse) errStr = `Server Error: ${textResponse}`;
         }
         throw new Error(errStr);
     }
 
-    let result;
-    try {
-        result = await response.json();
-    } catch (e) {
-        throw new Error("Server returned an invalid JSON success response.");
-    }
-
+    const result = await metaRes.json();
     return { mediaKey: result.mediaKey, metaKey: result.metaKey, uuid: result.mediaKey.split("-")[1].split(".")[0] };
 }
 
