@@ -279,7 +279,8 @@ export const handler = async (event) => {
 
         // Extract UUID from key: media/<uuid>.ext → <uuid>
         const filename = key.split("/").pop(); // e.g. "abc-123.mp4"
-        const uuid = filename.replace(/\.[^.]+$/, ""); // "abc-123"
+        const cleanFilename = filename.replace(/{}$/, ""); // remove any stray S3 event brackets
+        const uuid = cleanFilename.split(".")[0]; // "abc-123"
 
         // Step 1: Frame Extraction
         const frames = await frameExtraction(bucket, key);

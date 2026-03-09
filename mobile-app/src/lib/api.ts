@@ -17,6 +17,8 @@ export interface FloodPrediction {
     risk_level: "high" | "medium" | "low";
     polygon: [number, number][];
     confidence: number;
+    color?: string;
+    submergence_ratio?: number;
 }
 
 export interface Alert {
@@ -101,11 +103,12 @@ export async function pollAnalysis(uuid: string): Promise<any> {
  * Fetch recent alerts (Phase 5 DynamoDB Output)
  */
 export async function getRecentAlerts(): Promise<{ alerts: Alert[] }> {
-    // Mocking recent alerts for UI display 
-    return {
-        alerts: [
-            { message: "High flood risk detected near Adyar river", severity: "high", timestamp: new Date().toISOString() },
-            { message: "Avoid low-lying areas in Velachery", severity: "medium", timestamp: new Date(Date.now() - 3600000).toISOString() }
-        ]
-    };
+    try {
+        const response = await fetch("/api/alerts/recent", { cache: "no-store" });
+        if (!response.ok) return { alerts: [] };
+        return await response.json();
+    } catch (err) {
+        console.error("Error fetching alerts:", err);
+        return { alerts: [] };
+    }
 }

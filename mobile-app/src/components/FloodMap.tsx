@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 import { MapContainer, TileLayer, Polygon, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -24,27 +25,31 @@ function MapController({ center }: { center: [number, number] }) {
     return null;
 }
 
+
+const fetcher = () => getFloodPredictions();
+
 export function FloodMap() {
     const [position, setPosition] = useState<[number, number] | null>(null);
-    const [predictions, setPredictions] = useState<FloodPrediction[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    // Auto-poll the latest flood GeoJSON every 3 seconds
+    const { data: res, error } = useSWR('live-flood-map', fetcher, {
+        refreshInterval: 3000,
+        revalidateOnFocus: true
+    });
+
+    const predictions = res?.predictions || [];
+    const loading = !res && !error && predictions.length === 0;
 
     useEffect(() => {
         // 1. Get User Location
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => setPosition([pos.coords.latitude, pos.coords.longitude]),
-                () => setPosition([13.0067, 80.2573]) // fallback to Chennai
+                () => setPosition([13.0067, 80.2573]) // fallback
             );
         } else {
             setPosition([13.0067, 80.2573]);
         }
-
-        // 2. Fetch Flood Polygons (from PostGIS/API wrapper)
-        getFloodPredictions().then((res) => {
-            setPredictions(res.predictions);
-            setLoading(false);
-        }).catch(() => setLoading(false));
     }, []);
 
     if (!position) {
@@ -90,24 +95,44 @@ export function FloodMap() {
                 </Marker>
 
                 {/* Flood Risk Polygons */}
-                {predictions.map((pred, i) => (
-                    <Polygon
-                        key={i}
-                        positions={pred.polygon}
-                        pathOptions={{
-                            ...getPolygonStyle(pred.risk_level),
-                            weight: 2
-                        }}
-                    >
-                        <Popup>
-                            <div className="text-sm">
-                                <p className="font-bold capitalize">{pred.risk_level} Risk Zone</p>
-                                <p>Confidence: {(pred.confidence * 100).toFixed(0)}%</p>
-                            </div>
-                        </Popup>
-                    </Polygon>
-                ))}
+                {predictions.map((pred, i) => {
+                    const defaultStyle = getPolygonStyle(pred.risk_level);
+                    const finalColor = pred.color || defaultStyle.color;
+
+                    return (
+                        <Polygon
+                            key={i}
+                            positions={pred.polygon}
+                            pathOptions={{
+                                color: finalColor,
+                                fillColor: finalColor,
+                                fillOpacity: 0.5,
+                                weight: 2
+                            }}
+                        >
+                            <Popup>
+                                <div className="text-sm">
+                                    <p className="font-bold capitalize">{pred.risk_level} Risk Zone</p>
+                                    <p>Confidence: {(pred.confidence * 100).toFixed(0)}%</p>
+                                    {pred.submergence_ratio !== undefined && (
+                                        <p>Submergence: {(pred.submergence_ratio * 100).toFixed(1)}%</p>
+                                    )}
+                                </div>
+                            </Popup>
+                        </Polygon>
+                    );
+                })}
             </MapContainer>
+
+            {/* Floating UI Overlay for Submergence Ratio */}
+            {predictions.length > 0 && predictions[0].submergence_ratio !== undefined && (
+                <div className="absolute top-4 right-4 z-[400] bg-background/90 backdrop-blur pointer-events-none p-3 rounded-lg shadow-sm border border-border flex flex-col items-end">
+                    <p className="text-xs text-muted-foreground uppercase font-semibold">Submergence Ratio</p>
+                    <p className="text-2xl font-bold font-mono" style={{ color: predictions[0].color }}>
+                        {(predictions[0].submergence_ratio * 100).toFixed(1)}%
+                    </p>
+                </div>
+            )}
         </Card>
     );
 }

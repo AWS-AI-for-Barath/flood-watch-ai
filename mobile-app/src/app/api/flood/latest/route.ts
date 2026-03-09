@@ -45,21 +45,27 @@ export async function GET() {
             console.warn("Analysis not found for", uuid, "using defaults");
         }
 
-        // 4. Compute Radius based on ratio mapping
-        let radiusMeters = 50;
+        // 4. Compute Drastic Radius scaling based on ratio mapping
+        let radiusMeters = 100;
         if (ratio < 0.2) {
-            radiusMeters = 50;
+            radiusMeters = 100;
             severity = "low";
         } else if (ratio < 0.4) {
-            radiusMeters = 120;
+            radiusMeters = 300;
             severity = "low";
         } else if (ratio < 0.7) {
-            radiusMeters = 300;
+            radiusMeters = 800;
             severity = "medium";
         } else {
-            radiusMeters = 600;
+            radiusMeters = 2000;
             severity = "high";
         }
+
+        // 4.5 Compute Spectral Color (Green -> Yellow -> Orange -> Red)
+        // Hue 120 is Green, Hue 0 is Red. We interpolate based on ratio.
+        const clampedRatio = Math.min(1.0, Math.max(0.0, ratio));
+        const hue = Math.max(0, 120 - (clampedRatio * 120));
+        const color = `hsl(${Math.round(hue)}, 100%, 45%)`;
 
         // 5. Generate 32-point circular polygon
         const points = [];
@@ -84,7 +90,9 @@ export async function GET() {
                     risk_level: severity,
                     polygon: points,
                     confidence: 0.95,
-                    timestamp: timestamp
+                    timestamp: timestamp,
+                    color: color,
+                    submergence_ratio: ratio
                 }
             ]
         });

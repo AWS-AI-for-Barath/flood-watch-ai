@@ -159,9 +159,9 @@ def phase2_ai_analysis(media_key):
     print("=" * 60)
 
     # The S3 trigger on media/* should fire processFloodAI automatically
-    # Analysis output goes to analysis/<uuid>{}.json due to a typo in the Lambda
+    # Analysis output goes to analysis/<uuid>.json
     base_name = media_key.split("/")[-1].rsplit(".", 1)[0]  # e2e-<TEST_ID>
-    analysis_key = f"analysis/{base_name}{{}}.json"
+    analysis_key = f"analysis/{base_name}.json"
 
     log(2, WAIT, f"Waiting for Lambda trigger: s3://{BUCKET}/{media_key} -> processFloodAI")
     log(2, WAIT, f"Expected output: s3://{BUCKET}/{analysis_key}")
