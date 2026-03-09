@@ -3,12 +3,16 @@ frontend:
   phases:
     preBuild:
       commands:
-        - cd mobile-app && npm ci
+        - cd "$AMPLIFY_SOURCE_DIRECTORY/mobile-app" && npm ci
     build:
       commands:
-        # Pre-set environment variables for the Next.js build
-        - cd mobile-app && printf "BUCKET_NAME=%s\nFLOODWATCH_AWS_REGION=%s\nFLOODWATCH_DB_MODE=%s\nFLOODWATCH_ALERT_MODE=%s\nNEXT_PUBLIC_FLOODWATCH_AWS_REGION=%s\n" $BUCKET_NAME $FLOODWATCH_AWS_REGION $FLOODWATCH_DB_MODE $FLOODWATCH_ALERT_MODE $FLOODWATCH_AWS_REGION > .env.production
-        - cd mobile-app && npm run build
+        # Robust environment variable injection using absolute paths
+        - cd "$AMPLIFY_SOURCE_DIRECTORY/mobile-app" && echo "BUCKET_NAME=$BUCKET_NAME" > .env.production
+        - cd "$AMPLIFY_SOURCE_DIRECTORY/mobile-app" && echo "FLOODWATCH_AWS_REGION=$FLOODWATCH_AWS_REGION" >> .env.production
+        - cd "$AMPLIFY_SOURCE_DIRECTORY/mobile-app" && echo "FLOODWATCH_DB_MODE=$FLOODWATCH_DB_MODE" >> .env.production
+        - cd "$AMPLIFY_SOURCE_DIRECTORY/mobile-app" && echo "FLOODWATCH_ALERT_MODE=$FLOODWATCH_ALERT_MODE" >> .env.production
+        - cd "$AMPLIFY_SOURCE_DIRECTORY/mobile-app" && echo "NEXT_PUBLIC_FLOODWATCH_AWS_REGION=$FLOODWATCH_AWS_REGION" >> .env.production
+        - cd "$AMPLIFY_SOURCE_DIRECTORY/mobile-app" && npm run build
   artifacts:
     baseDirectory: mobile-app/.next
     files:
