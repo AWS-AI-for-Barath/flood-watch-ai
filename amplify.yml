@@ -1,23 +1,25 @@
 version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - (cd mobile-app && npm ci)
-    build:
-      commands:
-        # Using subshells to ensure each step starts from the project root
-        - (cd mobile-app && echo "BUCKET_NAME=$BUCKET_NAME" > .env.production)
-        - (cd mobile-app && echo "FLOODWATCH_AWS_REGION=$FLOODWATCH_AWS_REGION" >> .env.production)
-        - (cd mobile-app && echo "FLOODWATCH_DB_MODE=$FLOODWATCH_DB_MODE" >> .env.production)
-        - (cd mobile-app && echo "FLOODWATCH_ALERT_MODE=$FLOODWATCH_ALERT_MODE" >> .env.production)
-        - (cd mobile-app && echo "NEXT_PUBLIC_FLOODWATCH_AWS_REGION=$FLOODWATCH_AWS_REGION" >> .env.production)
-        - (cd mobile-app && npm run build)
-  artifacts:
-    baseDirectory: mobile-app/.next
-    files:
-      - '**/*'
-  cache:
-    paths:
-      - mobile-app/node_modules/**/*
-      - mobile-app/.next/cache/**/*
+applications:
+  - appRoot: mobile-app
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm ci
+        build:
+          commands:
+            # We are inside mobile-app automatically due to appRoot
+            - echo "BUCKET_NAME=$BUCKET_NAME" > .env.production
+            - echo "FLOODWATCH_AWS_REGION=$FLOODWATCH_AWS_REGION" >> .env.production
+            - echo "FLOODWATCH_DB_MODE=$FLOODWATCH_DB_MODE" >> .env.production
+            - echo "FLOODWATCH_ALERT_MODE=$FLOODWATCH_ALERT_MODE" >> .env.production
+            - echo "NEXT_PUBLIC_FLOODWATCH_AWS_REGION=$FLOODWATCH_AWS_REGION" >> .env.production
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+          - .next/cache/**/*

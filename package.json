@@ -1,0 +1,9 @@
+{
+    "name": "flood-watch-ai-monorepo",
+    "private": true,
+    "scripts": {
+        "dev": "npm run dev --prefix mobile-app",
+        "build": "npm run build --prefix mobile-app",
+        "start": "npm run start --prefix mobile-app"
+    }
+}
