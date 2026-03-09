@@ -1,0 +1,35 @@
+{
+    "jobSummaries": [
+        {
+            "jobArn": "arn:aws:amplify:us-east-1:246950780510:apps/dxzn1sglz0zyo/branches/final-submission/jobs/0000000019",
+            "jobId": "19",
+            "commitId": "92a58d40c656ca4839aa888c3119536d95d2814c",
+            "commitMessage": "chore: return raw AWS error trace on API failure for debugging",
+            "commitTime": "2026-03-10T01:13:56+05:30",
+            "startTime": "2026-03-10T01:14:00.715000+05:30",
+            "status": "SUCCEED",
+            "endTime": "2026-03-10T01:16:38.115000+05:30"
+        },
+        {
+            "jobArn": "arn:aws:amplify:us-east-1:246950780510:apps/dxzn1sglz0zyo/branches/final-submission/jobs/0000000018",
+            "jobId": "18",
+            "commitId": "d165a561ce8d8749b5bf0c8881c37dce94da14c5",
+            "commitMessage": "Fix: Instantiate AWS SDK Clients inside request handlers to prevent Amplify SSR cold start crashes",
+            "commitTime": "2026-03-10T01:06:17+05:30",
+            "startTime": "2026-03-10T01:06:21.612000+05:30",
+            "status": "SUCCEED",
+            "endTime": "2026-03-10T01:08:55.411000+05:30"
+        },
+        {
+            "jobArn": "arn:aws:amplify:us-east-1:246950780510:apps/dxzn1sglz0zyo/branches/final-submission/jobs/0000000017",
+            "jobId": "17",
+            "commitId": "5f33008423354eeb7fd5365820241b1c451dd457",
+            "commitMessage": "Fix: Enhance S3 upload API error handling and robust frontend fetch parsing",
+            "commitTime": "2026-03-10T00:55:57+05:30",
+            "startTime": "2026-03-10T00:56:01.033000+05:30",
+            "status": "SUCCEED",
+            "endTime": "2026-03-10T00:58:32.573000+05:30"
+        }
+    ],
+    "nextToken": "IkFRSUNBSGpLZjBUSHVRc3pvQzdZendYK2JvcFRnWnNpWVZGTVgwM3N2R2kxVTRaOTZ3R0hLdEpGOFM1T0YwOStNNEswZ0QvMEFBQUNNRENDQWl3R0NTcUdTSWIzRFFFSEJxQ0NBaDB3Z2dJWkFnRUFNSUlDRWdZSktvWklodmNOQVFjQk1CNEdDV0NHU0FGbEF3UUJMakFSQkF4bkxvSVJIazQvMnQ3RTRYVUNBUkNBZ2dIaitaNEc1V0ZvOGR2V1VNNzZid3BCOEFJTGYxVVA1WjhIeTY3dnBLTDdyT2VycjNyZjdqMGVaSGttaFl3NW5SSnFYVStuMitsa0RmSUlzOTNCdUZkRlVuT2h6cHB0RjVGb2g5SmQzdXh1NlVUNEFCUEcwYmNhbDRTU3pkN3VETVFUZDRUZ3JZN3o0UE1VVEtXNTNCYU55b3djMHRnaUY3K1JQZEpYNDVWYk14VVppdVk3WFdBQmlPb0h0aTBsckViZ1ZVR0JVbmRkcWFJbG9sa1JjVVR0My9RMk9Qd0s4SjFZRnJ4Z2hFRnY3RWJDSTlpeDRZa05SWHdyM2lVNk9lSWQvb1cwM3dTK0w3N2FST05NNDdTUTJVcHNsUjBhMmN6L1BPWGFjTExqaENOb3pEdmZJL0Jrb2lBcUdmRWwxZkY5QmljdEJ4WStFdHZzMlhpUUY5KzBLUzZXUXBzWk5UWFJLUHR1UEw4bktnQmVTYnpBaFBnejhRVGxpeEtIQ0Y4Q1VqUlJmWmdJR1plVmZXbUFiN2JtclA1SmlHNlBjVllsYklUbDFzdy8yZURFV3hWSEdpR3RVZHdUdkpTMXZGRFdtaUhVUWwvMTFLSThyekdYbFNlT0FVZGhzR3RXNG96WkJNZFQ3dGgvdXNZUzU4SWFMZWMwVU1SVkdQV21LcG01R3g2NlYrZEZGQWNtRzdITzVGTGNneUQ2d0psWnlTU1pvOVdDZnM5Z0dVdmxYNzUwU1pCQVFMYWNOelg5U0I2SjhKVDVXdnFUNkVHTFVodTg1TC9kZ25SUjZkZHp1eHBMTWttT3pPZFpjbkN2RStNYnlXK21kKzZYOXRHaThyNHRXWVdwIg=="
+}

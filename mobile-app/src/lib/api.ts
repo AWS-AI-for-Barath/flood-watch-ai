@@ -83,12 +83,12 @@ export async function uploadMedia(file: File, metadata: Record<string, unknown>)
 
     if (!response.ok) {
         let errStr = "Failed to upload media";
+        const textResponse = await response.text();
         try {
-            const err = await response.json();
+            const err = JSON.parse(textResponse);
             errStr = err.error || errStr;
         } catch (e) {
             // Server returned a raw 500 string instead of JSON
-            const textResponse = await response.text().catch(() => "");
             if (textResponse) errStr = `Server Error: ${textResponse}`;
         }
         throw new Error(errStr);
