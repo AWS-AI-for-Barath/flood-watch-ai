@@ -1,0 +1,163 @@
+// lib/api.ts
+// Environment variables for API Gateways
+
+const PRESIGN_API_URL = "/api/presign";
+const ROUTER_API_URL = "/api/routing";
+
+export interface RoutePrediction {
+    status: string;
+    start: [number, number];
+    goal: [number, number];
+    route: [number, number][];
+    risk_level: string;
+    max_submergence_ratio: number;
+}
+
+export interface FloodPrediction {
+    risk_level: "high" | "medium" | "low";
+    polygon: [number, number][];
+    confidence: number;
+}
+
+export interface Alert {
+    message: string;
+    severity: "high" | "medium" | "low";
+    timestamp: string;
+}
+
+/**
+ * Fetch flood prediction polygons (Phase 3 PostGIS Output)
+ */
+export async function getFloodPredictions(): Promise<{ predictions: FloodPrediction[] }> {
+    // Generate a visual bounding box polygon around the user's latest reported flood location.
+    // In full production, this would query PostGIS for active intersections.
+    let centerLat = 13.0067;
+    let centerLng = 80.2573;
+    let severity: "high" | "medium" | "low" = "high";
+    let ratio = 0.6;
+
+    if (typeof window !== "undefined") {
+        const savedLat = localStorage.getItem("floodwatch_last_upload_lat");
+        const savedLng = localStorage.getItem("floodwatch_last_upload_lng");
+        const savedSev = localStorage.getItem("floodwatch_last_severity");
+        const savedRatio = localStorage.getItem("floodwatch_last_ratio");
+
+        if (savedLat && savedLng) {
+            centerLat = parseFloat(savedLat);
+            centerLng = parseFloat(savedLng);
+        }
+        if (savedSev) severity = savedSev as any;
+        if (savedRatio) ratio = parseFloat(savedRatio);
+    }
+
+    // Scale the danger zone radius depending on how high the water depth (ratio) is
+    let radius = 600; // default for high (>0.7)
+    severity = "high"; // red
+
+    if (ratio < 0.2) {
+        radius = 50;
+        severity = "low"; // yellow
+    } else if (ratio < 0.4) {
+        radius = 120;
+        severity = "low"; // yellow
+    } else if (ratio < 0.7) {
+        radius = 300;
+        severity = "medium"; // orange (#FFD580)
+    }
+
+    // Generate a 32-point circular polygon in lat/lng mapping
+    const points: [number, number][] = [];
+    const R_EARTH = 111320; // roughly meters in 1 degree of latitude
+    const latConversion = R_EARTH;
+    const lngConversion = R_EARTH * Math.cos((centerLat * Math.PI) / 180);
+
+    for (let i = 0; i < 32; i++) {
+        const angle = (2 * Math.PI * i) / 32;
+        const latOffset = (radius * Math.cos(angle)) / latConversion;
+        const lngOffset = (radius * Math.sin(angle)) / lngConversion;
+        points.push([centerLat + latOffset, centerLng + lngOffset]);
+    }
+
+    console.log("Flood severity:", severity);
+    console.log("Submergence ratio:", ratio);
+    console.log("Computed radius:", radius);
+    console.log("Generated polygon:", points);
+
+    return {
+        predictions: [
+            {
+                risk_level: severity,
+                polygon: points,
+                confidence: 0.95
+            }
+        ]
+    };
+}
+
+/**
+ * Fetch safe route avoiding flooded areas (Phase 4 OSRM Output)
+ */
+export async function getSafeRoute(startLat: number, startLng: number, goalLat: number, goalLng: number): Promise<RoutePrediction> {
+    const url = `${ROUTER_API_URL}?start=${startLat},${startLng}&goal=${goalLat},${goalLng}`;
+    const response = await fetch(url, { method: "GET" });
+    if (!response.ok) throw new Error("Failed to fetch route");
+    return response.json();
+}
+
+/**
+ * Force the backend to register a flood polygon at these coordinates before routing (Phase 4 propagation)
+ */
+export async function propagateFlood(lat: number, lon: number, severity: string = "high", submergence_ratio: number = 0.6): Promise<void> {
+    const response = await fetch("/api/propagate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lat, lon, severity, submergence_ratio })
+    });
+    if (!response.ok) {
+        console.warn("Flood propagation request failed, routing may ignore the new polygon.");
+    }
+}
+
+/**
+ * Upload file directly to S3 via Next.js Proxy Route
+ */
+export async function uploadMedia(file: File, metadata: Record<string, unknown>): Promise<{ mediaKey: string, metaKey: string, uuid: string }> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("metadata", JSON.stringify(metadata));
+
+    const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData
+    });
+
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Failed to upload media");
+    }
+
+    const result = await response.json();
+    return { mediaKey: result.mediaKey, metaKey: result.metaKey, uuid: result.mediaKey.split("-")[1].split(".")[0] };
+}
+
+/**
+ * Poll S3 for the asynchronous Bedrock AI analysis file
+ */
+export async function pollAnalysis(uuid: string): Promise<any> {
+    const response = await fetch(`/api/analysis?uuid=${uuid}`, { cache: "no-store" });
+    if (!response.ok) throw new Error("Failed to check analysis");
+    return response.json();
+}
+
+/**
+ * Fetch recent alerts (Phase 5 DynamoDB Output)
+ */
+export async function getRecentAlerts(): Promise<{ alerts: Alert[] }> {
+    // Mocking recent alerts for UI display 
+    return {
+        alerts: [
+            { message: "High flood risk detected near Adyar river", severity: "high", timestamp: new Date().toISOString() },
+            { message: "Avoid low-lying areas in Velachery", severity: "medium", timestamp: new Date(Date.now() - 3600000).toISOString() }
+        ]
+    };
+}

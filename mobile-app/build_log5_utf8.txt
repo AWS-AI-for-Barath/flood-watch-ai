@@ -1,0 +1,216 @@
+﻿
+> mobile-app@0.1.0 build
+> next build
+
+node.exe : ΓÜá 
+`eslint` 
+configuration in 
+next.config.mjs is no 
+longer supported. See 
+more info here: https:
+//nextjs.org/docs/app/
+api-reference/cli/next
+#next-lint-options
+At line:1 char:1
++ & "C:\Program Files\
+nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (ΓÜá `eslin   
+ t` co...xt-lint-o    
+ptions:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+ΓÜá Invalid 
+next.config.mjs 
+options detected: 
+ΓÜá     Unrecognized 
+key(s) in object: 
+'eslint'
+ΓÜá See more info 
+here: https://nextjs.o
+rg/docs/messages/inval
+id-next-config
+Γû▓ Next.js 16.1.6 (Turbopack)
+
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack 
+build failed with 1 
+errors:
+./src/app/page.tsx:7:1
+8
+Ecmascript file had 
+an error
+[0m [90m  5 |[39m
+ [90m  6 |[39m 
+[90m// Leaflet 
+requires window 
+object, so we 
+dynamically import it 
+with SSR disabled[39m
+[31m[1m>[22m[39m[
+90m  7 |[39m 
+[36mconst[39m 
+[33mFloodMap[39m 
+[33m=[39m 
+dynamic(() 
+[33m=>[39m [36mimpo
+rt[39m([32m"@/compon
+ents/FloodMap"[39m)[
+33m.[39mthen((m) 
+[33m=>[39m m[33m.[
+39m[33mFloodMap[39m)
+[33m,[39m {
+ [90m    |[39m      
+            [31m[1m^
+[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[
+31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[1
+m^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[
+22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[3
+9m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[
+90m  8 |[39m   
+ssr[33m:[39m [36mfa
+lse[39m[33m,[39m
+ [90m    |[39m [31m
+[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[
+1m^[22m[39m
+[31m[1m>[22m[39m[
+90m  9 |[39m   
+loading[33m:[39m () 
+[33m=>[39m [33m<[3
+9m[33mdiv[39m classN
+ame[33m=[39m[32m"w-
+full h-[400px] 
+rounded-xl 
+bg-muted/50 
+animate-pulse flex 
+items-center justify-c
+enter"[39m[33m>[39m
+[33mLoading[39m 
+[33mMap[39m [33mEng
+ine[39m[33m...[39m
+[33m<[39m[33m/[39m
+[33mdiv[39m[33m>[39
+m
+ [90m    |[39m [31m
+[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m
+^[22m[39m[31m[1m^
+[22m[39m[31m[1m^[2
+2m[39m[31m[1m^[22m
+[39m[31m[1m^[22m[
+39m[31m[1m^[22m[39
+m[31m[1m^[22m[39m
+[31m[1m^[22m[39m[3
+1m[1m^[22m[39m[31m
+[1m^[22m[39m[31m[
+1m^[22m[39m
+[31m[1m>[22m[39m[
+90m 10 |[39m 
+})[33m;[39m
+ [90m    |[39m [31m
+[1m^[22m[39m[31m[
+1m^[22m[39m[31m[1m
+^[22m[39m
+ [90m 11 |[39m
+ [90m 12 |[39m 
+[36mexport[39m 
+[36mdefault[39m 
+[36mfunction[39m 
+[33mHomePage[39m() {
+ [90m 13 |[39m   
+[36mreturn[39m ([0m
+
+`ssr: false` is not 
+allowed with 
+`next/dynamic` in 
+Server Components. 
+Please move it into a 
+Client Component.
+
+
+    at <unknown> (./sr
+c/app/page.tsx:7:18)

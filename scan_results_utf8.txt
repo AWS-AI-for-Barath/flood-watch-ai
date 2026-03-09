@@ -1,0 +1,49 @@
+﻿============================================================
+  FLOODWATCH AWS BACKEND SCAN
+============================================================
+
+[IDENTITY] Account: 246950780510  User: cli-user
+
+[LAMBDAS] 7 functions:
+  - floodwatch-presign                  python3.12      lambda_function.handler
+  - generatePresignedUrl                nodejs20.x      index.handler
+  - processFloodAI                      nodejs20.x      index.handler
+  - processFloodAlerts                  python3.12      lambda_handler.handler
+  - routingLambda                       python3.10      phase4_routing.routing.lambda_handler.handler
+  - simulateFloodPropagation            python3.12      lambda_handler.handler
+  - transformFloodPolygon               python3.10      lambda_function.handler
+
+[S3] floodwatch-uploads: 9 objects
+  Prefixes: analysis/, media/, metadata/
+    analysis/WhatsApp Image 2026-03-01 at 9.57.40 PM.json       98 bytes
+    analysis/mock_community_video.json                       96 bytes
+    analysis/verify-phase2.json                              95 bytes
+    media/WhatsApp Image 2026-03-01 at 9.57.40 PM.jpeg    87638 bytes
+    media/e2e-test.jpg                                       27 bytes
+    media/mock_community_video.mp4                            0 bytes
+    media/test-flood-video.mp4                                0 bytes
+    media/verify-phase2.jpg                             1083929 bytes
+    metadata/e2e-test.json                                   80 bytes
+
+[DYNAMODB] alert_history: ACTIVE
+  Keys: ["user_id", "timestamp"]
+
+[EVENTBRIDGE] 2 rules:
+  - floodwatch-media-uploaded                ENABLED    -> 
+  - phase4_simulation_completed              ENABLED    -> processFloodAlerts
+
+[API GATEWAY] 3 APIs:
+  - FloodWatchAPI                  https://150zje9iz6.execute-api.us-east-1.amazonaws.com
+    Routes: POST /generate-upload-url
+  - floodwatch-api                 https://481hzpqaq3.execute-api.us-east-1.amazonaws.com
+    Routes: POST /api/presign
+  - FloodWatchRoutingAPI           https://gldtyb3ale.execute-api.us-east-1.amazonaws.com
+    Routes: GET /route
+
+[RDS] 1 instances:
+  - database-1                     available       postgres 15.12
+    Endpoint: database-1.ckdm4y6i86ke.us-east-1.rds.amazonaws.com:5432
+
+============================================================
+  SCAN COMPLETE
+============================================================

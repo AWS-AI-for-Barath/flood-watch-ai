@@ -1,0 +1,47 @@
+﻿=== processFloodAI CONFIG ===
+Runtime:  nodejs20.x
+Handler:  index.handler
+Timeout:  30s
+Memory:   512MB
+State:    Active
+  ENV FLOODWATCH_USE_BEDROCK = true
+
+=== S3 NOTIFICATION CONFIG ===
+LambdaFunctionConfigurations: [
+  {
+    "Id": "12a1c36d-9a36-4b63-8844-3dc6f1e03c4e",
+    "LambdaFunctionArn": "arn:aws:lambda:us-east-1:246950780510:function:processFloodAI",
+    "Events": [
+      "s3:ObjectCreated:Put"
+    ],
+    "Filter": {
+      "Key": {
+        "FilterRules": [
+          {
+            "Name": "Prefix",
+            "Value": "media/"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "Id": "b9a31754-e5ae-42b3-a90b-444b9f3f2731",
+    "LambdaFunctionArn": "arn:aws:lambda:us-east-1:246950780510:function:transf
+
+=== DIRECT INVOKE processFloodAI ===
+Uploaded test image
+Status: 200
+FunctionError: None
+Response: {"statusCode":500,"body":"{\"status\":\"error\",\"message\":\"The model returned the following errors: The provided image could not be processed. Try again with a valid image.\"}"}
+
+=== transformFloodPolygon CONFIG ===
+Runtime:  python3.10
+Handler:  lambda_function.handler
+Timeout:  30s
+  ENV BUCKET_NAME = floodwatch-uploads
+  ENV DB_HOST = database-1.ckdm4y6i86ke.us-east-1.rds.amazonaws.com
+  ENV DB_NAME = floodwatch
+  ENV DB_PASS = 
+  ENV DB_PORT = 5432
+  ENV DB_USER = postgres

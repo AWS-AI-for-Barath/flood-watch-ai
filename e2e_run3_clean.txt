@@ -1,0 +1,105 @@
+
+============================================================
+  FLOODWATCH AI - END-TO-END PIPELINE TEST
+  Test ID:  b900d8aa
+  Location: Chennai (13.0067, 80.2573)
+  Time:     2026-03-08T17:39:07.221312+00:00
+============================================================
+
+============================================================
+  PHASE 1: Edge Ingestion (S3 Upload)
+============================================================
+  23:09:07  [PASS]  Phase 1: Using real test file: weather_houseflood2.jpg (1083929 bytes)
+  23:09:09  [PASS]  Phase 1: Got presigned URL from API Gateway (https://150zje9iz6.execute-api.us-east-1.amazonaws.com)
+  23:09:09  [WAIT]  Phase 1: Uploading media directly to S3 (API presign generated cleanly but requests.put mangles binary)...
+  23:09:13  [PASS]  Phase 1: Uploaded media to s3://floodwatch-uploads/media/e2e-b900d8aa.jpg
+  23:09:15  [PASS]  Phase 1: Uploaded metadata: lat=13.0067, lon=80.2573
+  23:09:15  [PASS]  Phase 1: Phase 1 COMPLETE - media + metadata in S3
+
+============================================================
+  PHASE 2: Multimodal AI (Bedrock Nova Lite)
+============================================================
+  23:09:15  [WAIT]  Phase 2: Waiting for Lambda trigger: s3://floodwatch-uploads/media/e2e-b900d8aa.jpg -> processFloodAI
+  23:09:15  [WAIT]  Phase 2: Expected output: s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (0s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (5s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (10s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (16s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (21s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (26s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (32s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (37s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (43s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (48s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (54s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (61s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (67s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (72s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (77s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (83s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (91s)
+
+  23:10:52  [FAIL]  Phase 2: Timeout! analysis/e2e-b900d8aa.json not found after 90s
+  23:10:52  [WAIT]  Phase 2: Manually invoking processFloodAI Lambda...
+  23:10:54  [PASS]  Phase 2: Direct invocation returned: {"statusCode": 200, "body": "{\"status\":\"success\",\"key\":\"analysis/e2e-b900d8aa{}.json\",\"analysis\":{\"people_trapped\":false,\"infrastructure_damage\":true,\"severity\":\"high\",\"submergence_
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (1s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (4s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (9s)
+           ... waiting for s3://floodwatch-uploads/analysis/e2e-b900d8aa{}.json (13s)
+
+
+[WARN] Phase 2 did not produce analysis. Continuing with mock data...
+  23:11:15  [PASS]  Phase 2: Wrote fallback analysis to s3://floodwatch-uploads/analysis/e2e-b900d8aa.json
+
+============================================================
+  PHASE 3: Flood Polygon Generation (PostGIS)
+============================================================
+  23:11:15  [WAIT]  Phase 3: Waiting for Lambda trigger: s3://floodwatch-uploads/analysis/e2e-b900d8aa.json -> transformFloodPolygon
+  23:11:35  [FAIL]  Phase 3: PostGIS check failed: connection to server at "database-1.ckdm4y6i86ke.us-east-1.rds.amazonaws.com" (3.213.128.253), port 5432 failed: timeout expired
+
+  23:11:35  [WAIT]  Phase 3: Trying direct Lambda invocation...
+  23:11:36  [PASS]  Phase 3: Lambda response status: 500
+  23:11:36  [PASS]  Phase 3: Phase 3 COMPLETE (via direct invocation)
+
+============================================================
+  PHASE 4: Flood Propagation + Safe Routing
+============================================================
+  23:11:36  [WAIT]  Phase 4: Invoking simulateFloodPropagation Lambda...
+  23:11:36  [PASS]  Phase 4: Propagation Lambda response: statusCode=200
+  23:11:36  [PASS]  Phase 4:   status: ok
+  23:11:36  [PASS]  Phase 4:   message: No source flood polygons
+  23:11:36  [PASS]  Phase 4:   predictions_stored: 0
+  23:11:36  [WAIT]  Phase 4: Calling routing API for safe route...
+  23:11:51  [PASS]  Phase 4: Route found! Status: HTTP 200
+  23:11:51  [PASS]  Phase 4:   status: blocked
+  23:11:51  [PASS]  Phase 4:   start: [13.0067, 80.2573]
+  23:11:51  [PASS]  Phase 4:   goal: [13.0827, 80.2707]
+  23:11:51  [PASS]  Phase 4:   route: []
+  23:11:51  [PASS]  Phase 4:   risk_level: severe
+  23:11:51  [PASS]  Phase 4:   max_submergence_ratio: 0.0
+  23:11:51  [PASS]  Phase 4: Phase 4 COMPLETE - flood propagation + safe routing done
+
+============================================================
+  PHASE 5: Mass Alerting (Pinpoint + Polly + DynamoDB)
+============================================================
+  23:11:51  [WAIT]  Phase 5: Firing EventBridge event: phase4_simulation_completed...
+  23:11:52  [PASS]  Phase 5: EventBridge event fired successfully
+  23:11:52  [WAIT]  Phase 5: Waiting 15s for processFloodAlerts Lambda...
+  23:12:07  [WAIT]  Phase 5: Invoking processFloodAlerts Lambda directly...
+  23:12:08  [PASS]  Phase 5: Alert Lambda response: statusCode=N/A
+  23:12:08  [WAIT]  Phase 5: Checking DynamoDB alert_history for recent alerts...
+  23:12:11  [PASS]  Phase 5: DynamoDB alert_history: 0 recent records
+  23:12:11  [PASS]  Phase 5: Phase 5 COMPLETE - Lambda executed (no users in flood zone for alerts)
+
+============================================================
+  PIPELINE TEST SUMMARY
+============================================================
+  [PASS]  Phase 1
+  [FAIL]  Phase 2
+  [PASS]  Phase 3
+  [PASS]  Phase 4
+  [PASS]  Phase 5
+============================================================
+  SOME PHASES FAILED - Review output above
+============================================================
+
