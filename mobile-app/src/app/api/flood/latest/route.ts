@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from "@aws-sdk/client-s3";
 
-const s3Client = new S3Client({ region: process.env.AWS_REGION || "us-east-1" });
+const s3Client = new S3Client({ region: process.env.FLOODWATCH_AWS_REGION || "us-east-1" });
 const BUCKET = "floodwatch-uploads";
 
 export async function GET() {

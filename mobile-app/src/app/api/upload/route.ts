@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 
 // Configure AWS S3 Client using the IAM credentials available in the environment
 const s3Client = new S3Client({
-    region: process.env.AWS_REGION || "us-east-1",
+    region: process.env.FLOODWATCH_AWS_REGION || "us-east-1",
     // Note: In an AWS Amplify deployment, IAM roles provide these credentials automatically.
     // Locally, it will fall back to the ~/.aws/credentials file.
 });

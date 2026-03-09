@@ -8,7 +8,7 @@ applications:
             - npm ci
         build:
           commands:
-            - env | grep -e BUCKET_NAME -e AWS_REGION >> .env.production
+            - env | grep -e BUCKET_NAME -e FLOODWATCH_AWS_REGION >> .env.production
             - npm run build
       artifacts:
         baseDirectory: .next
