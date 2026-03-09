@@ -4,11 +4,6 @@ import { v4 as uuidv4 } from "uuid";
 
 const BUCKET_NAME = process.env.BUCKET_NAME || "floodwatch-uploads";
 
-export const config = {
-    api: {
-        bodyParser: false,
-    },
-};
 
 export async function POST(req: Request) {
     let s3Client: S3Client | null = null;
