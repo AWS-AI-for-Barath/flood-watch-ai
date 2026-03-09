@@ -88,7 +88,10 @@ export async function POST(req: Request) {
         }, { status: 200 });
 
     } catch (error: any) {
-        console.error("S3 Upload Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error("Global Catch Error:", error);
+        const errorDetail = error instanceof Error
+            ? { name: error.name, message: error.message, stack: error.stack }
+            : typeof error === 'object' ? JSON.stringify(error) : String(error);
+        return NextResponse.json({ error: "S3 Upload Error: " + JSON.stringify(errorDetail) }, { status: 500 });
     }
 }
