@@ -13,8 +13,8 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "Missing uuid parameter" }, { status: 400 });
         }
 
-        // The Bedrock AI Lambda has a known typo where it appends `{}` to the analysis filename
-        const analysisKey = `analysis/e2e-${uuid}{}.json`;
+        // The Bedrock AI Lambda appends the uuid directly
+        const analysisKey = `analysis/e2e-${uuid}.json`;
 
         try {
             const command = new GetObjectCommand({ Bucket: BUCKET, Key: analysisKey });

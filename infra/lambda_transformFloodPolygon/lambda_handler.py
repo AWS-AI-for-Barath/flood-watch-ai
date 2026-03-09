@@ -32,11 +32,12 @@ DB_PASS = os.environ.get("DB_PASS")
 REFERENCE_HEIGHT_M = 1.5
 
 # Radius mapping: submergence_ratio → buffer radius in meters
+# Radius mapping: submergence_ratio → buffer radius in meters
 RADIUS_MAP = [
-    (0.8, 200),
-    (0.5, 100),
-    (0.2, 50),
-    (0.0, 20),
+    (0.7, 600),
+    (0.4, 300),
+    (0.2, 120),
+    (0.0, 50),
 ]
 
 

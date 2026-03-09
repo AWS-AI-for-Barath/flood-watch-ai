@@ -29,69 +29,17 @@ export interface Alert {
  * Fetch flood prediction polygons (Phase 3 PostGIS Output)
  */
 export async function getFloodPredictions(): Promise<{ predictions: FloodPrediction[] }> {
-    // Generate a visual bounding box polygon around the user's latest reported flood location.
-    // In full production, this would query PostGIS for active intersections.
-    let centerLat = 13.0067;
-    let centerLng = 80.2573;
-    let severity: "high" | "medium" | "low" = "high";
-    let ratio = 0.6;
-
-    if (typeof window !== "undefined") {
-        const savedLat = localStorage.getItem("floodwatch_last_upload_lat");
-        const savedLng = localStorage.getItem("floodwatch_last_upload_lng");
-        const savedSev = localStorage.getItem("floodwatch_last_severity");
-        const savedRatio = localStorage.getItem("floodwatch_last_ratio");
-
-        if (savedLat && savedLng) {
-            centerLat = parseFloat(savedLat);
-            centerLng = parseFloat(savedLng);
+    try {
+        const response = await fetch("/api/flood/latest", { cache: "no-store" });
+        if (!response.ok) {
+            console.warn("Failed to fetch latest flood GeoJSON, returning empty array");
+            return { predictions: [] };
         }
-        if (savedSev) severity = savedSev as any;
-        if (savedRatio) ratio = parseFloat(savedRatio);
+        return await response.json();
+    } catch (err) {
+        console.error("Error fetching live flood maps:", err);
+        return { predictions: [] };
     }
-
-    // Scale the danger zone radius depending on how high the water depth (ratio) is
-    let radius = 600; // default for high (>0.7)
-    severity = "high"; // red
-
-    if (ratio < 0.2) {
-        radius = 50;
-        severity = "low"; // yellow
-    } else if (ratio < 0.4) {
-        radius = 120;
-        severity = "low"; // yellow
-    } else if (ratio < 0.7) {
-        radius = 300;
-        severity = "medium"; // orange (#FFD580)
-    }
-
-    // Generate a 32-point circular polygon in lat/lng mapping
-    const points: [number, number][] = [];
-    const R_EARTH = 111320; // roughly meters in 1 degree of latitude
-    const latConversion = R_EARTH;
-    const lngConversion = R_EARTH * Math.cos((centerLat * Math.PI) / 180);
-
-    for (let i = 0; i < 32; i++) {
-        const angle = (2 * Math.PI * i) / 32;
-        const latOffset = (radius * Math.cos(angle)) / latConversion;
-        const lngOffset = (radius * Math.sin(angle)) / lngConversion;
-        points.push([centerLat + latOffset, centerLng + lngOffset]);
-    }
-
-    console.log("Flood severity:", severity);
-    console.log("Submergence ratio:", ratio);
-    console.log("Computed radius:", radius);
-    console.log("Generated polygon:", points);
-
-    return {
-        predictions: [
-            {
-                risk_level: severity,
-                polygon: points,
-                confidence: 0.95
-            }
-        ]
-    };
 }
 
 /**

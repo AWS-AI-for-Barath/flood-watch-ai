@@ -24,7 +24,7 @@ RDS_HOST      = "database-1.ckdm4y6i86ke.us-east-1.rds.amazonaws.com"
 RDS_PORT      = 5432
 RDS_DB        = "floodwatch"
 RDS_USER      = "postgres"
-
+RDS_PASS      = "Bigbang3_"
 
 # Real Chennai flood-prone coordinates (Adyar River area)
 TEST_LAT      = 13.0067
