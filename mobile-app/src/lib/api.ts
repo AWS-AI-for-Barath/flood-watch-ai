@@ -82,11 +82,25 @@ export async function uploadMedia(file: File, metadata: Record<string, unknown>)
     });
 
     if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || "Failed to upload media");
+        let errStr = "Failed to upload media";
+        try {
+            const err = await response.json();
+            errStr = err.error || errStr;
+        } catch (e) {
+            // Server returned a raw 500 string instead of JSON
+            const textResponse = await response.text().catch(() => "");
+            if (textResponse) errStr = `Server Error: ${textResponse}`;
+        }
+        throw new Error(errStr);
     }
 
-    const result = await response.json();
+    let result;
+    try {
+        result = await response.json();
+    } catch (e) {
+        throw new Error("Server returned an invalid JSON success response.");
+    }
+
     return { mediaKey: result.mediaKey, metaKey: result.metaKey, uuid: result.mediaKey.split("-")[1].split(".")[0] };
 }
 
