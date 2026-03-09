@@ -1,0 +1,9 @@
+[
+    "/aws/lambda/floodwatch-presign",
+    "/aws/lambda/generatePresignedUrl",
+    "/aws/lambda/processFloodAI",
+    "/aws/lambda/processFloodAlerts",
+    "/aws/lambda/routingLambda",
+    "/aws/lambda/simulateFloodPropagation",
+    "/aws/lambda/transformFloodPolygon"
+]
