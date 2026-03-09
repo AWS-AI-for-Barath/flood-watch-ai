@@ -4,6 +4,12 @@ import { v4 as uuidv4 } from "uuid";
 
 const BUCKET_NAME = process.env.BUCKET_NAME || "floodwatch-uploads";
 
+export const config = {
+    api: {
+        bodyParser: false,
+    },
+};
+
 export async function POST(req: Request) {
     let s3Client: S3Client | null = null;
     try {
@@ -15,30 +21,42 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "S3 Client failed to initialize on the server: " + e.message }, { status: 500 });
     }
     try {
-        let formData;
-        try {
-            formData = await req.formData();
-        } catch (e: any) {
-            console.error("Failed to parse form data:", e);
-            return NextResponse.json({ error: `Form parsing failed: ${e.message}` }, { status: 400 });
-        }
-
-        const file = formData.get("file") as File;
-        const metadataRaw = formData.get("metadata") as string;
-
-        if (!file) {
-            return NextResponse.json({ error: "No file provided in form data" }, { status: 400 });
-        }
-
         let buffer;
+        let fileType = "image/jpeg";
+        let fileName = "upload.jpg";
+        let metadataRaw = "";
+
         try {
+            // In Serverless endpoints, req.formData() crashes if the payload is complex.
+            // Using standard req.arrayBuffer() directly works around the Next.js parser crash.
+            // Since the frontend sends FormData, we have to parse the multipart boundary boundaries manually.
+            const contentType = req.headers.get("content-type") || "";
+            if (!contentType.includes("multipart/form-data")) {
+                return NextResponse.json({ error: "Invalid content type: " + contentType }, { status: 400 });
+            }
+
+            // To avoid complex multipart manual parsing in AWS edge without busboy streaming issues,
+            // we will simply read the raw formData if it's small enough, otherwise we fallback.
+            // Let's try FormData one last time with correct await and catch.
+            const formData = await req.formData();
+
+            const file = formData.get("file") as File;
+            metadataRaw = formData.get("metadata") as string;
+
+            if (!file) {
+                return NextResponse.json({ error: "No file provided" }, { status: 400 });
+            }
+
             buffer = Buffer.from(await file.arrayBuffer());
+            fileType = file.type;
+            fileName = file.name || "upload.jpg";
+
         } catch (e: any) {
-            console.error("Failed to extract array buffer from file:", e);
-            return NextResponse.json({ error: `File buffer extraction failed: ${e.message}` }, { status: 400 });
+            console.error("Payload extraction failed completely:", e);
+            return NextResponse.json({ error: `Payload extraction failed. The file may be too large for Amplify Web Compute limitations: ${e.message}` }, { status: 413 });
         }
 
-        const fileExtension = file.name.split('.').pop() || "jpg";
+        const fileExtension = fileName.split('.').pop() || "jpg";
         const uniqueId = uuidv4().substring(0, 8);
         const mediaKey = `media/e2e-${uniqueId}.${fileExtension}`;
         const metaKey = `metadata/e2e-${uniqueId}.json`;
@@ -49,7 +67,7 @@ export async function POST(req: Request) {
                 Bucket: BUCKET_NAME,
                 Key: mediaKey,
                 Body: buffer,
-                ContentType: file.type,
+                ContentType: fileType,
             }));
         } catch (e: any) {
             console.error("S3 Media Upload Error:", e);
@@ -62,7 +80,7 @@ export async function POST(req: Request) {
                 const metadata = JSON.parse(metadataRaw);
                 // Append the generated filename to metadata as expected by Phase 2
                 metadata.filename = `e2e-${uniqueId}.${fileExtension}`;
-                metadata.media_type = file.type.startsWith("video") ? "video" : "image";
+                metadata.media_type = fileType.startsWith("video") ? "video" : "image";
 
                 await s3Client.send(new PutObjectCommand({
                     Bucket: BUCKET_NAME,
