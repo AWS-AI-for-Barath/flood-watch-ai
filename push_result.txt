@@ -1,0 +1,25 @@
+﻿git : To https://githu
+b.com/AWS-AI-for-Barat
+h/flood-watch-ai
+At line:1 char:1
++ git push origin 
+final-submission 
+--force 2>&1 | 
+Out-File -Encoding ut 
+...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (To https:/   
+ /gith.../flood-wa    
+tch-ai:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+   740728e..fb5a7a7  
+final-submission -> 
+final-submission

@@ -30,13 +30,26 @@ export async function GET() {
             let message = `Automated flood alert dispatched for registered subzone.`;
 
             try {
+                // Fetch metadata (for ratio/severity fallback)
+                const metaRes = await fetch(`https://${BUCKET}.s3.${REGION}.amazonaws.com/metadata/${uuid}.json`, { cache: 'no-store' });
+                if (metaRes.ok) {
+                    const meta = await metaRes.json();
+                    ratio = meta.submergence_ratio || 0.0;
+                    severityStr = meta.severity || "low";
+                    message = `Automated flood alert dispatched for registered subzone.`;
+                }
+
+                // Try to fetch analysis file for override (real AI uploads have this)
                 const analysisRes = await fetch(`https://${BUCKET}.s3.${REGION}.amazonaws.com/analysis/${uuid}.json`, { cache: 'no-store' });
                 if (analysisRes.ok) {
                     const analysis = await analysisRes.json();
-                    ratio = analysis.submergence_ratio || 0.0;
+                    ratio = analysis.submergence_ratio || ratio;
                     if (ratio >= 0.7) severityStr = "high";
                     else if (ratio >= 0.4) severityStr = "medium";
+                    else if (analysis.severity) severityStr = analysis.severity;
 
+                    message = `SYSTEM UPDATE: Live camera feed just detected a ${(ratio * 100).toFixed(1)}% submergence ratio nearby. Proceed with caution.`;
+                } else if (ratio > 0) {
                     message = `SYSTEM UPDATE: Live camera feed just detected a ${(ratio * 100).toFixed(1)}% submergence ratio nearby. Proceed with caution.`;
                 }
             } catch (e) {

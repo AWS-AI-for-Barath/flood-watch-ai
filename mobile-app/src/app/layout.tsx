@@ -4,7 +4,7 @@ import "./globals.css";
 import { BottomNav } from "@/components/BottomNav";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -34,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
-      <body className={`${inter.className} antialiased max-w-md mx-auto relative bg-background h-[100dvh] overflow-hidden`}>
+      <body className={`${inter.className} antialiased relative bg-background h-[100dvh] overflow-hidden`}>
         {/* Scrollable Main Area */}
         <main className="h-full w-full overflow-y-auto pb-16">
           {children}

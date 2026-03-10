@@ -1,0 +1,76 @@
+﻿
+> mobile-app@0.1.0 build
+> next build
+
+node.exe : ΓÜá 
+`eslint` 
+configuration in 
+next.config.mjs is no 
+longer supported. See 
+more info here: https:
+//nextjs.org/docs/app/
+api-reference/cli/next
+#next-lint-options
+At line:1 char:1
++ & "C:\Program Files\
+nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (ΓÜá `eslin   
+ t` co...xt-lint-o    
+ptions:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+ΓÜá Invalid 
+next.config.mjs 
+options detected: 
+ΓÜá     Unrecognized 
+key(s) in object: 
+'eslint'
+ΓÜá See more info 
+here: https://nextjs.o
+rg/docs/messages/inval
+id-next-config
+Γû▓ Next.js 16.1.6 (Turbopack)
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 7.6s
+  Skipping validation of types
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/16) ...
+  Generating static pages using 7 workers (4/16) 
+  Generating static pages using 7 workers (8/16) 
+  Generating static pages using 7 workers (12/16) 
+Γ£ô Generating static pages using 7 workers (16/16) in 1177.0ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ Γùï /alerts
+Γö£ ╞Æ /api/alerts/recent
+Γö£ ╞Æ /api/analysis
+Γö£ ╞Æ /api/flood-zones
+Γö£ ╞Æ /api/flood/latest
+Γö£ ╞Æ /api/presign
+Γö£ ╞Æ /api/propagate
+Γö£ ╞Æ /api/routing
+Γö£ ╞Æ /api/upload
+Γö£ Γùï /profile
+Γö£ Γùï /routing
+Γöö Γùï /upload
+
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

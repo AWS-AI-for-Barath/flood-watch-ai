@@ -124,15 +124,6 @@ export function FloodMap() {
                 })}
             </MapContainer>
 
-            {/* Floating UI Overlay for Submergence Ratio */}
-            {predictions.length > 0 && predictions[0].submergence_ratio !== undefined && (
-                <div className="absolute top-4 right-4 z-[400] bg-background/90 backdrop-blur pointer-events-none p-3 rounded-lg shadow-sm border border-border flex flex-col items-end">
-                    <p className="text-xs text-muted-foreground uppercase font-semibold">Submergence Ratio</p>
-                    <p className="text-2xl font-bold font-mono" style={{ color: predictions[0].color }}>
-                        {(predictions[0].submergence_ratio * 100).toFixed(1)}%
-                    </p>
-                </div>
-            )}
         </Card>
     );
 }

@@ -1,0 +1,193 @@
+﻿git : remote: error: 
+GH013: Repository 
+rule violations found 
+for refs/heads/final-s
+ubmission.        
+At line:1 char:1
++ git push origin 
+final-submission 2>&1 
+| Out-File -Encoding 
+utf8 push_ ...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (remote: er   
+ ror: ...ission.      
+      :String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+remote: 
+remote: - GITHUB PUSH 
+PROTECTION        
+remote:   ΓÇöΓÇöΓÇöΓÇö
+ΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓ
+ÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇ
+öΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇö
+ΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓ
+ÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇ
+ö        
+remote:     Resolve 
+the following 
+violations before 
+pushing again        
+remote: 
+remote:     - Push 
+cannot contain 
+secrets        
+remote: 
+remote:             
+remote:      (?) 
+Learn how to resolve 
+a blocked push        
+remote:      https://d
+ocs.github.com/code-se
+curity/secret-scanning
+/working-with-secret-s
+canning-and-push-prote
+ction/working-with-pus
+h-protection-from-the-
+command-line#resolving
+-a-blocked-push       
+ 
+remote:             
+remote:      (?) This 
+repository does not 
+have Secret Scanning 
+enabled, but is 
+eligible. Enable 
+Secret Scanning to 
+view and manage 
+detected secrets.     
+   
+remote:      Visit 
+the repository 
+settings page, https:/
+/github.com/AWS-AI-for
+-Barath/flood-watch-ai
+/settings/security_ana
+lysis        
+remote:             
+remote:             
+remote:       ΓÇöΓÇö 
+Amazon AWS Access Key 
+ID ΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓ
+ÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇ
+öΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇö
+ΓÇöΓÇöΓÇöΓÇöΓÇö       
+ 
+remote:        
+locations:        
+remote:          - 
+commit: a18d74b5df5043
+01e82c12123e9c8f5dc5cc
+ba27        
+remote:            
+path: Analyzing 
+Project State.md:2441 
+       
+remote:          - 
+commit: a18d74b5df5043
+01e82c12123e9c8f5dc5cc
+ba27        
+remote:            
+path: Analyzing 
+Project State.md:2445 
+       
+remote:             
+remote:        (?) To 
+push, remove secret 
+from commit(s) or 
+follow this URL to 
+allow the secret.     
+   
+remote:        https:/
+/github.com/AWS-AI-for
+-Barath/flood-watch-ai
+/security/secret-scann
+ing/unblock-secret/3Ai
+POkIFaB5VTXgJIvqNOfcwG
+Lk        
+remote:             
+remote:             
+remote:       ΓÇöΓÇö 
+Amazon AWS Secret 
+Access Key ΓÇöΓÇöΓÇöΓÇ
+öΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇö
+ΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓ
+ÇöΓÇöΓÇöΓÇö        
+remote:        
+locations:        
+remote:          - 
+commit: a18d74b5df5043
+01e82c12123e9c8f5dc5cc
+ba27        
+remote:            
+path: Analyzing 
+Project State.md:2441 
+       
+remote:             
+remote:        (?) To 
+push, remove secret 
+from commit(s) or 
+follow this URL to 
+allow the secret.     
+   
+remote:        https:/
+/github.com/AWS-AI-for
+-Barath/flood-watch-ai
+/security/secret-scann
+ing/unblock-secret/3Ai
+POje3d0nKXJoSEybRuX8YF
+C0        
+remote:             
+remote:             
+remote:       ΓÇöΓÇö 
+Amazon AWS Secret 
+Access Key ΓÇöΓÇöΓÇöΓÇ
+öΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇö
+ΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓÇöΓ
+ÇöΓÇöΓÇöΓÇö        
+remote:        
+locations:        
+remote:          - 
+commit: a18d74b5df5043
+01e82c12123e9c8f5dc5cc
+ba27        
+remote:            
+path: Analyzing 
+Project State.md:2445 
+       
+remote:             
+remote:        (?) To 
+push, remove secret 
+from commit(s) or 
+follow this URL to 
+allow the secret.     
+   
+remote:        https:/
+/github.com/AWS-AI-for
+-Barath/flood-watch-ai
+/security/secret-scann
+ing/unblock-secret/3Ai
+POn9abhS4ezkSGoDRbuReI
+51        
+remote:             
+remote: 
+remote: 
+To https://github.com/
+AWS-AI-for-Barath/floo
+d-watch-ai
+ ! [remote rejected] 
+final-submission -> 
+final-submission 
+(push declined due to 
+repository rule 
+violations)
+error: failed to push 
+some refs to 'https://
+github.com/AWS-AI-for-
+Barath/flood-watch-ai'
