@@ -120,9 +120,24 @@ export async function uploadMedia(file: File, metadata: Record<string, unknown>)
 }
 
 export async function pollAnalysis(uuid: string): Promise<any> {
-    const response = await fetch(`/api/analysis?uuid=${uuid}`, { cache: "no-store" });
-    if (!response.ok) throw new Error("Failed to check analysis");
-    return response.json();
+    // AWS Amplify Web Compute Lambda has no IAM credentials. We attached a PublicReadAnalysis
+    // Bucket Policy directly to the `analysis/` prefix so the browser can natively read it.
+    const analysisKey = `analysis/mobile-${uuid}.json`;
+    const BUCKET = "floodwatch-uploads";
+    const REGION = process.env.NEXT_PUBLIC_FLOODWATCH_AWS_REGION || "us-east-1";
+    const s3Url = `https://${BUCKET}.s3.${REGION}.amazonaws.com/${analysisKey}`;
+
+    const response = await fetch(s3Url, { cache: "no-store" });
+
+    // AWS S3 returns 403 Forbidden for missing files when ListBucket is not allowed
+    if (response.status === 403 || response.status === 404) {
+        return { status: "pending" };
+    }
+
+    if (!response.ok) throw new Error("Failed to read S3 analysis file directly.");
+
+    const data = await response.json();
+    return { status: "complete", data };
 }
 
 /**
