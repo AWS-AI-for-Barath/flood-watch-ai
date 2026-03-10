@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import aws4 from 'aws4';
+import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 
 export const runtime = 'nodejs';
 
@@ -27,12 +28,15 @@ export async function GET(req: Request) {
             headers: {}
         };
 
-        // Sign the request natively using lambda/amplify environment variables
-        // This is 100% immune to Next.js Webpack Edge Runtime panic bugs
+        // Fetch IAM Role credentials dynamically from the Amplify Lambda container
+        const provider = fromNodeProviderChain();
+        const credentials = await provider();
+
+        // Sign the request natively using the temporary IAM STS tokens
         aws4.sign(opts, {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-            sessionToken: process.env.AWS_SESSION_TOKEN || undefined
+            accessKeyId: credentials.accessKeyId,
+            secretAccessKey: credentials.secretAccessKey,
+            sessionToken: credentials.sessionToken
         });
 
         // Perform raw HTTPS fetch from S3
@@ -44,7 +48,7 @@ export async function GET(req: Request) {
         });
 
         if (s3Res.status === 404 || s3Res.status === 403) {
-            // S3 returns 403 if it doesn't exist but IAM lacks ListBucket, same as 404 functionally here
+            // S3 returns 403 if it doesn't exist but IAM lacks ListBucket
             return NextResponse.json({ status: "pending" }, { status: 200 });
         }
 
