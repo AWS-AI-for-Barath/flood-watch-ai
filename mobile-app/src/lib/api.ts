@@ -119,9 +119,6 @@ export async function uploadMedia(file: File, metadata: Record<string, unknown>)
     return { mediaKey: mediaKey, metaKey: metaKey, uuid: mediaKey.split("-")[1].split(".")[0] };
 }
 
-/**
- * Poll S3 for the asynchronous Bedrock AI analysis file
- */
 export async function pollAnalysis(uuid: string): Promise<any> {
     const response = await fetch(`/api/analysis?uuid=${uuid}`, { cache: "no-store" });
     if (!response.ok) throw new Error("Failed to check analysis");
