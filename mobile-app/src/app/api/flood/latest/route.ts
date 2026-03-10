@@ -20,7 +20,7 @@ async function s3Fetch(path: string, queryParams: string = "") {
     aws4.sign(opts, {
         accessKeyId: process.env.API_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || '',
         secretAccessKey: process.env.API_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || '',
-        sessionToken: process.env.AWS_SESSION_TOKEN || undefined
+        sessionToken: process.env.API_AWS_ACCESS_KEY_ID ? undefined : process.env.AWS_SESSION_TOKEN
     });
 
     const url = `https://${opts.host}${opts.path}`;
