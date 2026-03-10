@@ -87,25 +87,18 @@ export async function GET() {
 
         // --- NEW: Inject the latest Live S3 Analysis as the newest alert ---
         try {
-            const listRes = await s3Fetch("", "list-type=2&prefix=metadata/");
-            const listXml = await listRes.text();
-
-            const contentRegex = /<Contents>.*?<Key>(.*?)<\/Key>.*?<LastModified>(.*?)<\/LastModified>.*?<\/Contents>/g;
-            let match;
-            const metaItems = [];
-            while ((match = contentRegex.exec(listXml)) !== null) {
-                metaItems.push({ Key: match[1], LastModified: new Date(match[2]) });
+            let uuid = null;
+            if (items.length > 0) {
+                const sortedItems = items.sort((a: any, b: any) => new Date(b.timestamp?.S || 0).getTime() - new Date(a.timestamp?.S || 0).getTime());
+                uuid = (sortedItems[0].user_id?.S || sortedItems[0].id?.S || "").replace("live-s3-", "");
             }
 
-            if (metaItems.length > 0) {
-                const latestMetaObj = metaItems.sort((a, b) => b.LastModified.getTime() - a.LastModified.getTime())[0];
-                const uuid = latestMetaObj.Key.substring("metadata/mobile-".length).replace(".json", "");
-
-                // Fetch the AI Analysis for it natively from public bucket
+            if (uuid) {
+                // Fetch the AI Analysis natively from public bucket
                 let ratio = 0.0;
                 let severityStr = "low";
 
-                const analysisKey = `analysis/mobile-${uuid}.json`;
+                const analysisKey = `analysis/${uuid}.json`;
                 const analysisRes = await fetch(`https://${BUCKET}.s3.${REGION}.amazonaws.com/${analysisKey}`);
                 if (analysisRes.ok) {
                     const analysis = await analysisRes.json();
@@ -117,9 +110,11 @@ export async function GET() {
                 // Check metadata for timestamp natively
                 let ts = new Date().toISOString();
                 try {
-                    const metaRes = await s3Fetch(latestMetaObj.Key);
-                    const metadata = await metaRes.json();
-                    if (metadata.timestamp) ts = metadata.timestamp;
+                    const metaRes = await fetch(`https://${BUCKET}.s3.${REGION}.amazonaws.com/metadata/${uuid}.json`);
+                    if (metaRes.ok) {
+                        const metadata = await metaRes.json();
+                        if (metadata.timestamp) ts = metadata.timestamp;
+                    }
                 } catch (e) { }
 
                 // Prepend the real-time alert

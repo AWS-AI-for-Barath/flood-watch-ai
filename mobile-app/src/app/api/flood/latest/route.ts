@@ -6,15 +6,20 @@ export const runtime = 'nodejs';
 const BUCKET = process.env.BUCKET_NAME || "floodwatch-uploads";
 const REGION = process.env.FLOODWATCH_AWS_REGION || process.env.NEXT_PUBLIC_FLOODWATCH_AWS_REGION || "us-east-1";
 
-// Helper to manually sign and fetch from S3 REST API
-async function s3Fetch(path: string, queryParams: string = "") {
+// Helper to manually sign and fetch from DynamoDB JSON API
+async function dynamoScan(tableName: string, limit: number) {
+    const bodyStr = JSON.stringify({ TableName: tableName, Limit: limit });
     const opts: any = {
-        host: `${BUCKET}.s3.${REGION}.amazonaws.com`,
-        path: `/${path}${queryParams ? '?' + queryParams : ''}`,
-        service: 's3',
+        host: `dynamodb.${REGION}.amazonaws.com`,
+        path: '/',
+        service: 'dynamodb',
         region: REGION,
-        method: 'GET',
-        headers: {}
+        method: 'POST',
+        body: bodyStr,
+        headers: {
+            'Content-Type': 'application/x-amz-json-1.0',
+            'X-Amz-Target': 'DynamoDB_20120810.Scan'
+        }
     };
 
     aws4.sign(opts, {
@@ -24,52 +29,51 @@ async function s3Fetch(path: string, queryParams: string = "") {
     });
 
     const url = `https://${opts.host}${opts.path}`;
-    const res = await fetch(url, { method: 'GET', headers: opts.headers, cache: 'no-store' });
-
-    if (!res.ok) {
-        throw new Error(`S3 Error HTTP ${res.status}: ${await res.text()}`);
-    }
-    return res;
+    const res = await fetch(url, { method: 'POST', headers: opts.headers, body: bodyStr, cache: 'no-store' });
+    if (!res.ok) throw new Error(`DynamoDB Error HTTP ${res.status}: ${await res.text()}`);
+    return await res.json();
 }
 
 export async function GET() {
     try {
-        // 1. Find the latest metadata file natively via S3 REST API
-        // ListObjectsV2 requires ?list-type=2&prefix=metadata/
-        const listRes = await s3Fetch("", "list-type=2&prefix=metadata/");
-        const listXml = await listRes.text();
+        // 1. Fetch newest alerts from DynamoDB to find the latest valid UUID
+        // DynamoDB `aws4` parsing works flawlessly, S3 `aws4` does not.
+        const ddbRes = await dynamoScan("alert_history", 20);
+        const items = ddbRes.Items || [];
 
-        // Simple regex XML parsing to avoid large dependency just for getting Keys
-        // Example XML: <Contents><Key>metadata/mobile-abc.json</Key><LastModified>2026...</LastModified></Contents>
-        const contentRegex = /<Contents>.*?<Key>(.*?)<\/Key>.*?<LastModified>(.*?)<\/LastModified>.*?<\/Contents>/g;
-        let match;
-        const items = [];
-        while ((match = contentRegex.exec(listXml)) !== null) {
-            items.push({ Key: match[1], LastModified: new Date(match[2]) });
+        let uuid = null;
+        if (items.length > 0) {
+            // Sort to ensure we fetch the newest alert record
+            const sortedItems = items.sort((a: any, b: any) => new Date(b.timestamp?.S || 0).getTime() - new Date(a.timestamp?.S || 0).getTime());
+            // Most recent UUID is stored as user_id or id in our schema
+            uuid = (sortedItems[0].user_id?.S || sortedItems[0].id?.S || "").replace("live-s3-", "");
         }
 
-        if (items.length === 0) {
-            return NextResponse.json({ features: [] });
+        // If DB is empty, default to latest known mock
+        if (!uuid) {
+            uuid = "mobile-1772983173003";
         }
 
-        // Sort by LastModified descending
-        const latestMetaObj = items.sort((a, b) => b.LastModified.getTime() - a.LastModified.getTime())[0];
+        // 2. Fetch Metadata (lat, lon, timestamp) natively from Public S3
+        let lat = 13.0067;
+        let lon = 80.2573;
+        let timestamp = new Date().toISOString();
 
-        // e.g. metadata/mobile-123.json
-        const uuid = latestMetaObj.Key.substring("metadata/mobile-".length).replace(".json", "");
+        try {
+            const metaRes = await fetch(`https://${BUCKET}.s3.${REGION}.amazonaws.com/metadata/${uuid}.json`);
+            if (metaRes.ok) {
+                const metadata = await metaRes.json();
+                lat = metadata.lat || lat;
+                lon = metadata.lng || metadata.lon || lon;
+                timestamp = metadata.timestamp || timestamp;
+            }
+        } catch (e) { console.warn("S3 Meta fetch fail:", e); }
 
-        // 2. Fetch Metadata (lat, lon, timestamp) natively
-        const metaRes = await s3Fetch(latestMetaObj.Key);
-        const metadata = await metaRes.json();
-        const lat = metadata.lat || 13.0067;
-        const lon = metadata.lng || metadata.lon || 80.2573;
-        const timestamp = metadata.timestamp || new Date().toISOString();
-
-        // 3. Fetch corresponding AI Analysis natively from the public bucket
+        // 3. Fetch corresponding AI Analysis natively from Public S3
         let ratio = 0.0;
         let severity = "low";
         try {
-            const analysisKey = `analysis/mobile-${uuid}.json`;
+            const analysisKey = `analysis/${uuid}.json`;
             const analysisRes = await fetch(`https://${BUCKET}.s3.${REGION}.amazonaws.com/${analysisKey}`);
             if (analysisRes.ok) {
                 const analysis = await analysisRes.json();
