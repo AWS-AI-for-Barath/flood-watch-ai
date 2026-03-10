@@ -8,8 +8,18 @@ const BUCKET = "floodwatch-uploads";
 
 export async function GET() {
     try {
-        const ddbClient = new DynamoDBClient({ region: process.env.FLOODWATCH_AWS_REGION || process.env.NEXT_PUBLIC_FLOODWATCH_AWS_REGION || "us-east-1" });
-        const s3Client = new S3Client({ region: process.env.FLOODWATCH_AWS_REGION || process.env.NEXT_PUBLIC_FLOODWATCH_AWS_REGION || "us-east-1" });
+        const credentials = {
+            accessKeyId: process.env.API_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || "",
+            secretAccessKey: process.env.API_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || ""
+        };
+        const ddbClient = new DynamoDBClient({
+            region: process.env.FLOODWATCH_AWS_REGION || process.env.NEXT_PUBLIC_FLOODWATCH_AWS_REGION || "us-east-1",
+            credentials
+        });
+        const s3Client = new S3Client({
+            region: process.env.FLOODWATCH_AWS_REGION || process.env.NEXT_PUBLIC_FLOODWATCH_AWS_REGION || "us-east-1",
+            credentials
+        });
         const command = new ScanCommand({
             TableName: "alert_history",
             Limit: 50

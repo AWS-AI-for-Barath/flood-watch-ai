@@ -1,11 +1,19 @@
 import { NextResponse } from 'next/server';
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from "@aws-sdk/client-s3";
 
-const BUCKET = "floodwatch-uploads";
+export const runtime = 'nodejs';
+
+const BUCKET = process.env.BUCKET_NAME || "floodwatch-uploads";
 
 export async function GET() {
     try {
-        const s3Client = new S3Client({ region: process.env.FLOODWATCH_AWS_REGION || process.env.NEXT_PUBLIC_FLOODWATCH_AWS_REGION || "us-east-1" });
+        const s3Client = new S3Client({
+            region: process.env.FLOODWATCH_AWS_REGION || process.env.NEXT_PUBLIC_FLOODWATCH_AWS_REGION || "us-east-1",
+            credentials: {
+                accessKeyId: process.env.API_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || "",
+                secretAccessKey: process.env.API_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || ""
+            }
+        });
         // 1. Find the latest metadata file to get the coordinates of the most recent upload
         const listCmd = new ListObjectsV2Command({
             Bucket: BUCKET,
