@@ -33,7 +33,7 @@ export function FloodMap() {
 
     // Auto-poll the latest flood GeoJSON every 3 seconds
     const { data: res, error } = useSWR('live-flood-map', fetcher, {
-        refreshInterval: 3000,
+        refreshInterval: 10000,
         revalidateOnFocus: true
     });
 

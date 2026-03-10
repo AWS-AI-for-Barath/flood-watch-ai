@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Camera, UploadCloud, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { uploadMedia, pollAnalysis } from "@/lib/api";
+import { uploadMedia, pollAnalysis, storeFloodZone } from "@/lib/api";
 
 export default function UploadPage() {
     const [file, setFile] = useState<File | null>(null);
@@ -28,20 +28,25 @@ export default function UploadPage() {
 
         try {
             let uploadRes: any = null;
+            let uploadLat: number | null = null;
+            let uploadLng: number | null = null;
+
             if ("geolocation" in navigator) {
                 const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
                     navigator.geolocation.getCurrentPosition(resolve, reject);
                 }).catch(() => null);
 
                 if (pos) {
+                    uploadLat = pos.coords.latitude;
+                    uploadLng = pos.coords.longitude;
                     const metadata = {
-                        lat: pos.coords.latitude,
-                        lng: pos.coords.longitude,
+                        lat: uploadLat,
+                        lng: uploadLng,
                         timestamp: new Date().toISOString()
                     };
                     uploadRes = await uploadMedia(file, metadata);
-                    localStorage.setItem("floodwatch_last_upload_lat", pos.coords.latitude.toString());
-                    localStorage.setItem("floodwatch_last_upload_lng", pos.coords.longitude.toString());
+                    localStorage.setItem("floodwatch_last_upload_lat", uploadLat.toString());
+                    localStorage.setItem("floodwatch_last_upload_lng", uploadLng.toString());
                 } else {
                     uploadRes = await uploadMedia(file, {});
                 }
@@ -54,6 +59,8 @@ export default function UploadPage() {
                 setStatus("analyzing");
                 let attempts = 0;
                 let analysisComplete = false;
+                let finalSeverity = "high";
+                let finalRatio = 0.6;
 
                 while (attempts < 15 && !analysisComplete) {
                     await new Promise(r => setTimeout(r, 2000));
@@ -61,8 +68,10 @@ export default function UploadPage() {
                     if (analysis.status === "complete") {
                         console.log("AI analysis:", analysis.data);
                         analysisComplete = true;
-                        localStorage.setItem("floodwatch_last_severity", analysis.data.severity || "high");
-                        localStorage.setItem("floodwatch_last_ratio", analysis.data.submergence_ratio?.toString() || "0.6");
+                        finalSeverity = analysis.data.severity || "high";
+                        finalRatio = analysis.data.submergence_ratio || 0.6;
+                        localStorage.setItem("floodwatch_last_severity", finalSeverity);
+                        localStorage.setItem("floodwatch_last_ratio", finalRatio.toString());
                     }
                     attempts++;
                 }
@@ -71,6 +80,11 @@ export default function UploadPage() {
                     // Fallback to defaults if backend timed out
                     localStorage.setItem("floodwatch_last_severity", "high");
                     localStorage.setItem("floodwatch_last_ratio", "0.6");
+                }
+
+                // Store flood zone persistently so ALL users can see it
+                if (uploadLat && uploadLng) {
+                    storeFloodZone(uploadLat, uploadLng, finalSeverity, finalRatio);
                 }
             }
 

@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import aws4 from 'aws4';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 
 export const runtime = 'nodejs';
 
@@ -18,37 +16,11 @@ export async function GET(req: Request) {
 
         const analysisKey = `analysis/mobile-${uuid}.json`;
 
-        // Create standard AWS HTTP request options for S3 REST API
-        const opts: any = {
-            host: `${BUCKET}.s3.${REGION}.amazonaws.com`,
-            path: `/${analysisKey}`,
-            service: 's3',
-            region: REGION,
-            method: 'GET',
-            headers: {}
-        };
-
-        // Fetch IAM Role credentials dynamically from the Amplify Lambda container
-        const provider = fromNodeProviderChain();
-        const credentials = await provider();
-
-        // Sign the request natively using the temporary IAM STS tokens
-        aws4.sign(opts, {
-            accessKeyId: credentials.accessKeyId,
-            secretAccessKey: credentials.secretAccessKey,
-            sessionToken: credentials.sessionToken
-        });
-
-        // Perform raw HTTPS fetch from S3
-        const s3Url = `https://${opts.host}${opts.path}`;
-        const s3Res = await fetch(s3Url, {
-            method: opts.method,
-            headers: opts.headers,
-            cache: 'no-store'
-        });
+        // Fetch directly from public S3 URL (bucket policy allows public read on analysis/*)
+        const s3Url = `https://${BUCKET}.s3.${REGION}.amazonaws.com/${analysisKey}`;
+        const s3Res = await fetch(s3Url, { cache: 'no-store' });
 
         if (s3Res.status === 404 || s3Res.status === 403) {
-            // S3 returns 403 if it doesn't exist but IAM lacks ListBucket
             return NextResponse.json({ status: "pending" }, { status: 200 });
         }
 
