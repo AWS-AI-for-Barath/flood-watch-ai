@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 
+export const runtime = 'nodejs';
+
 const BUCKET = "floodwatch-uploads";
 
 export async function GET(req: Request) {
