@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
 import { S3Client, ListObjectsV2Command, GetObjectCommand } from "@aws-sdk/client-s3";
 
+export const runtime = 'nodejs';
+
 const BUCKET = "floodwatch-uploads";
 
 export async function GET() {
