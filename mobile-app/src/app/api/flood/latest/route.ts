@@ -1,54 +1,81 @@
 import { NextResponse } from 'next/server';
-import { S3Client, ListObjectsV2Command, GetObjectCommand } from "@aws-sdk/client-s3";
+import aws4 from 'aws4';
 
 export const runtime = 'nodejs';
 
 const BUCKET = process.env.BUCKET_NAME || "floodwatch-uploads";
+const REGION = process.env.FLOODWATCH_AWS_REGION || process.env.NEXT_PUBLIC_FLOODWATCH_AWS_REGION || "us-east-1";
+
+// Helper to manually sign and fetch from S3 REST API
+async function s3Fetch(path: string, queryParams: string = "") {
+    const opts: any = {
+        host: `${BUCKET}.s3.${REGION}.amazonaws.com`,
+        path: `/${path}${queryParams ? '?' + queryParams : ''}`,
+        service: 's3',
+        region: REGION,
+        method: 'GET',
+        headers: {}
+    };
+
+    aws4.sign(opts, {
+        accessKeyId: process.env.API_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.API_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || '',
+        sessionToken: process.env.AWS_SESSION_TOKEN || undefined
+    });
+
+    const url = `https://${opts.host}${opts.path}`;
+    const res = await fetch(url, { method: 'GET', headers: opts.headers, cache: 'no-store' });
+
+    if (!res.ok) {
+        throw new Error(`S3 Error HTTP ${res.status}: ${await res.text()}`);
+    }
+    return res;
+}
 
 export async function GET() {
     try {
-        const s3Client = new S3Client({
-            region: process.env.FLOODWATCH_AWS_REGION || process.env.NEXT_PUBLIC_FLOODWATCH_AWS_REGION || "us-east-1",
-            credentials: {
-                accessKeyId: process.env.API_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || "",
-                secretAccessKey: process.env.API_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || ""
-            }
-        });
-        // 1. Find the latest metadata file to get the coordinates of the most recent upload
-        const listCmd = new ListObjectsV2Command({
-            Bucket: BUCKET,
-            Prefix: "metadata/"
-        });
-        const listRes = await s3Client.send(listCmd);
+        // 1. Find the latest metadata file natively via S3 REST API
+        // ListObjectsV2 requires ?list-type=2&prefix=metadata/
+        const listRes = await s3Fetch("", "list-type=2&prefix=metadata/");
+        const listXml = await listRes.text();
 
-        if (!listRes.Contents || listRes.Contents.length === 0) {
+        // Simple regex XML parsing to avoid large dependency just for getting Keys
+        // Example XML: <Contents><Key>metadata/mobile-abc.json</Key><LastModified>2026...</LastModified></Contents>
+        const contentRegex = /<Contents>.*?<Key>(.*?)<\/Key>.*?<LastModified>(.*?)<\/LastModified>.*?<\/Contents>/g;
+        let match;
+        const items = [];
+        while ((match = contentRegex.exec(listXml)) !== null) {
+            items.push({ Key: match[1], LastModified: new Date(match[2]) });
+        }
+
+        if (items.length === 0) {
             return NextResponse.json({ features: [] });
         }
 
         // Sort by LastModified descending
-        const latestMetaObj = listRes.Contents.sort((a: any, b: any) => b.LastModified!.getTime() - a.LastModified!.getTime())[0];
+        const latestMetaObj = items.sort((a, b) => b.LastModified.getTime() - a.LastModified.getTime())[0];
 
-        // e.g. metadata/e2e-abc.json
-        const uuid = latestMetaObj.Key!.substring("metadata/".length).replace(".json", "");
+        // e.g. metadata/mobile-123.json
+        const uuid = latestMetaObj.Key.substring("metadata/mobile-".length).replace(".json", "");
 
-        // 2. Fetch Metadata (lat, lon, timestamp)
-        const metaRes = await s3Client.send(new GetObjectCommand({ Bucket: BUCKET, Key: latestMetaObj.Key }));
-        const metaStr = await metaRes.Body?.transformToString();
-        const metadata = JSON.parse(metaStr || "{}");
+        // 2. Fetch Metadata (lat, lon, timestamp) natively
+        const metaRes = await s3Fetch(latestMetaObj.Key);
+        const metadata = await metaRes.json();
         const lat = metadata.lat || 13.0067;
         const lon = metadata.lng || metadata.lon || 80.2573;
         const timestamp = metadata.timestamp || new Date().toISOString();
 
-        // 3. Fetch corresponding AI Analysis
+        // 3. Fetch corresponding AI Analysis natively from the public bucket
         let ratio = 0.0;
         let severity = "low";
         try {
-            const analysisKey = `analysis/${uuid}.json`;
-            const analysisRes = await s3Client.send(new GetObjectCommand({ Bucket: BUCKET, Key: analysisKey }));
-            const analysisStr = await analysisRes.Body?.transformToString();
-            const analysis = JSON.parse(analysisStr || "{}");
-            ratio = analysis.submergence_ratio || 0.0;
-            severity = analysis.severity || "low";
+            const analysisKey = `analysis/mobile-${uuid}.json`;
+            const analysisRes = await fetch(`https://${BUCKET}.s3.${REGION}.amazonaws.com/${analysisKey}`);
+            if (analysisRes.ok) {
+                const analysis = await analysisRes.json();
+                ratio = analysis.submergence_ratio || 0.0;
+                severity = analysis.severity || "low";
+            }
         } catch (err: any) {
             console.warn("Analysis not found for", uuid, "using defaults");
         }

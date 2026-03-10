@@ -1,31 +1,65 @@
 import { NextResponse } from 'next/server';
-import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
-import { S3Client, ListObjectsV2Command, GetObjectCommand } from "@aws-sdk/client-s3";
+import aws4 from 'aws4';
 
 export const runtime = 'nodejs';
 
-const BUCKET = "floodwatch-uploads";
+const BUCKET = process.env.BUCKET_NAME || "floodwatch-uploads";
+const REGION = process.env.FLOODWATCH_AWS_REGION || process.env.NEXT_PUBLIC_FLOODWATCH_AWS_REGION || "us-east-1";
+
+// Helper to manually sign and fetch from S3 REST API
+async function s3Fetch(path: string, queryParams: string = "") {
+    const opts: any = {
+        host: `${BUCKET}.s3.${REGION}.amazonaws.com`,
+        path: `/${path}${queryParams ? '?' + queryParams : ''}`,
+        service: 's3',
+        region: REGION,
+        method: 'GET',
+        headers: {}
+    };
+
+    aws4.sign(opts, {
+        accessKeyId: process.env.API_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.API_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || '',
+        sessionToken: process.env.AWS_SESSION_TOKEN || undefined
+    });
+
+    const url = `https://${opts.host}${opts.path}`;
+    const res = await fetch(url, { method: 'GET', headers: opts.headers, cache: 'no-store' });
+    if (!res.ok) throw new Error(`S3 Error HTTP ${res.status}: ${await res.text()}`);
+    return res;
+}
+
+// Helper to manually sign and fetch from DynamoDB JSON API
+async function dynamoScan(tableName: string, limit: number) {
+    const bodyStr = JSON.stringify({ TableName: tableName, Limit: limit });
+    const opts: any = {
+        host: `dynamodb.${REGION}.amazonaws.com`,
+        path: '/',
+        service: 'dynamodb',
+        region: REGION,
+        method: 'POST',
+        body: bodyStr,
+        headers: {
+            'Content-Type': 'application/x-amz-json-1.0',
+            'X-Amz-Target': 'DynamoDB_20120810.Scan'
+        }
+    };
+
+    aws4.sign(opts, {
+        accessKeyId: process.env.API_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.API_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || '',
+        sessionToken: process.env.AWS_SESSION_TOKEN || undefined
+    });
+
+    const url = `https://${opts.host}${opts.path}`;
+    const res = await fetch(url, { method: 'POST', headers: opts.headers, body: bodyStr, cache: 'no-store' });
+    if (!res.ok) throw new Error(`DynamoDB Error HTTP ${res.status}: ${await res.text()}`);
+    return await res.json();
+}
 
 export async function GET() {
     try {
-        const credentials = {
-            accessKeyId: process.env.API_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || "",
-            secretAccessKey: process.env.API_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || ""
-        };
-        const ddbClient = new DynamoDBClient({
-            region: process.env.FLOODWATCH_AWS_REGION || process.env.NEXT_PUBLIC_FLOODWATCH_AWS_REGION || "us-east-1",
-            credentials
-        });
-        const s3Client = new S3Client({
-            region: process.env.FLOODWATCH_AWS_REGION || process.env.NEXT_PUBLIC_FLOODWATCH_AWS_REGION || "us-east-1",
-            credentials
-        });
-        const command = new ScanCommand({
-            TableName: "alert_history",
-            Limit: 50
-        });
-
-        const response = await ddbClient.send(command);
+        const response = await dynamoScan("alert_history", 50);
         const items = response.Items || [];
 
         // Convert from DynamoDB format to simple JSON expected by frontend Alert interface
@@ -53,31 +87,38 @@ export async function GET() {
 
         // --- NEW: Inject the latest Live S3 Analysis as the newest alert ---
         try {
-            const listCmd = new ListObjectsV2Command({ Bucket: BUCKET, Prefix: "metadata/" });
-            const listRes = await s3Client.send(listCmd);
+            const listRes = await s3Fetch("", "list-type=2&prefix=metadata/");
+            const listXml = await listRes.text();
 
-            if (listRes.Contents && listRes.Contents.length > 0) {
-                // Get the absolute newest uploaded image metadata
-                const latestMetaObj = listRes.Contents.sort((a: any, b: any) => b.LastModified!.getTime() - a.LastModified!.getTime())[0];
-                const uuid = latestMetaObj.Key!.substring("metadata/".length).replace(".json", "");
+            const contentRegex = /<Contents>.*?<Key>(.*?)<\/Key>.*?<LastModified>(.*?)<\/LastModified>.*?<\/Contents>/g;
+            let match;
+            const metaItems = [];
+            while ((match = contentRegex.exec(listXml)) !== null) {
+                metaItems.push({ Key: match[1], LastModified: new Date(match[2]) });
+            }
 
-                // Fetch the AI Analysis for it
-                const analysisKey = `analysis/${uuid}.json`;
-                const analysisRes = await s3Client.send(new GetObjectCommand({ Bucket: BUCKET, Key: analysisKey }));
-                const analysisStr = await analysisRes.Body?.transformToString();
-                const analysis = JSON.parse(analysisStr || "{}");
+            if (metaItems.length > 0) {
+                const latestMetaObj = metaItems.sort((a, b) => b.LastModified.getTime() - a.LastModified.getTime())[0];
+                const uuid = latestMetaObj.Key.substring("metadata/mobile-".length).replace(".json", "");
 
-                const ratio = analysis.submergence_ratio || 0.0;
+                // Fetch the AI Analysis for it natively from public bucket
+                let ratio = 0.0;
                 let severityStr = "low";
-                if (ratio >= 0.7) severityStr = "high";
-                else if (ratio >= 0.4) severityStr = "medium";
 
-                // Check metadata for timestamp
+                const analysisKey = `analysis/mobile-${uuid}.json`;
+                const analysisRes = await fetch(`https://${BUCKET}.s3.${REGION}.amazonaws.com/${analysisKey}`);
+                if (analysisRes.ok) {
+                    const analysis = await analysisRes.json();
+                    ratio = analysis.submergence_ratio || 0.0;
+                    if (ratio >= 0.7) severityStr = "high";
+                    else if (ratio >= 0.4) severityStr = "medium";
+                }
+
+                // Check metadata for timestamp natively
                 let ts = new Date().toISOString();
                 try {
-                    const metaRes = await s3Client.send(new GetObjectCommand({ Bucket: BUCKET, Key: latestMetaObj.Key }));
-                    const metaStr = await metaRes.Body?.transformToString();
-                    const metadata = JSON.parse(metaStr || "{}");
+                    const metaRes = await s3Fetch(latestMetaObj.Key);
+                    const metadata = await metaRes.json();
                     if (metadata.timestamp) ts = metadata.timestamp;
                 } catch (e) { }
 
